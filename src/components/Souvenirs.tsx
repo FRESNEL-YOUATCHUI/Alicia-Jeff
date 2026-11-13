@@ -14,6 +14,28 @@ export default function Souvenirs({open,onOpen,revision}:{open:boolean;onOpen:()
   const [photographer,setPhotographer]=useState(false);
   const refresh=useCallback(async()=>{setError('');setLoading(true);try{const result=await api<Memories>('/api/souvenirs');setData(result);setMoreMessages(result.message_count>result.messages.length);}catch(e){setError((e as Error).message);}finally{setLoading(false);}},[]);
   useEffect(()=>{if(!open)return;refresh();const timer=setInterval(refresh,30_000);return()=>clearInterval(timer);},[open,revision,refresh]);
+  useEffect(()=>{
+    if(!data)return;
+    if(!data.gallery_available||(album&&!data.albums.some(a=>a.id===album.id))){setAlbum(null);setPhotos([]);setPhotoIndex(null);}
+  },[data,album]);
+  useEffect(()=>{
+    if(!open||!album)return;
+    let active=true;
+    const renew=async()=>{
+      try{
+        const refreshed:Photo[]=[];let hasMore=false;
+        for(let offset=0;offset<Math.max(photos.length,1);offset+=60){
+          const page=await api<{photos:Photo[];has_more:boolean}>('/api/photos?album='+album.id+'&offset='+offset);
+          refreshed.push(...page.photos);hasMore=page.has_more;if(!hasMore)break;
+        }
+        if(active){setPhotos(refreshed);setMore(hasMore);setPhotoIndex(index=>index!==null&&index>=refreshed.length?null:index);}
+      }catch{if(active){setPhotos([]);setPhotoIndex(null);setAlbum(null);void refresh();}}
+    };
+    const timer=setInterval(()=>void renew(),8*60_000);
+    const visible=()=>{if(!document.hidden)void renew();};
+    document.addEventListener('visibilitychange',visible);
+    return()=>{active=false;clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
+  },[open,album,photos.length,refresh]);
   const move=useCallback((delta:number)=>setPhotoIndex(i=>i===null?null:(i+delta+photos.length)%photos.length),[photos.length]);
   useEffect(()=>{if(photoIndex===null)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const listener=(e:KeyboardEvent)=>{if(e.key==='Escape')setPhotoIndex(null);if(e.key==='ArrowRight')move(1);if(e.key==='ArrowLeft')move(-1);};window.addEventListener('keydown',listener);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',listener);};},[photoIndex,move]);
   async function post(event:React.FormEvent){

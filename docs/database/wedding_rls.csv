@@ -1,0 +1,17 @@
+relname,relrowsecurity,relforcerowsecurity
+wedding_albums,true,false
+wedding_albums_pkey,false,false
+wedding_messages,true,false
+wedding_messages_pkey,false,false
+wedding_messages_ref_hash_key,false,false
+wedding_messages_response_id_key,false,false
+wedding_photos,true,false
+wedding_photos_pkey,false,false
+wedding_photos_storage_path_key,false,false
+wedding_rsvps,true,false
+wedding_rsvps_pkey,false,false
+wedding_rsvps_ref_hash_key,false,false
+wedding_settings,true,false
+wedding_settings_pkey,false,false
+wedding_staff,true,false
+wedding_staff_pkey,false,false

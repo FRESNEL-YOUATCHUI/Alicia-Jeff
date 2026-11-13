@@ -5,6 +5,7 @@ export default defineConfig(({command})=>({
  plugins:[react()],
  publicDir:command==='build'?false:'public',
  resolve:{alias:{'@':fileURLToPath(new URL('./src',import.meta.url))}},
- server:{proxy:{'/api':{target:'http://127.0.0.1:8787',changeOrigin:true}}},
+ // vercel dev owns /api. A proxy is enabled only by the standalone local scripts.
+ server:process.env.WEDDING_DEV_API?{proxy:{'/api':{target:process.env.WEDDING_DEV_API,changeOrigin:true}}}:{},
  optimizeDeps:{exclude:['lucide-react']}
 }));

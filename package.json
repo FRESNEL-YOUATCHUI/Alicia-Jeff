@@ -10,11 +10,17 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "start": "node server/index.mjs",
-    "test:server": "node --test server/server.test.mjs"
+    "test:server": "node --test server/server.test.mjs",
+    "dev:legacy": "node scripts/dev-legacy.mjs",
+    "dev:vercel": "node scripts/vercel-dev.mjs --listen 3000",
+    "test:api": "node --test tests/*.test.mjs",
+    "test:experience": "node scripts/test-experience.mjs",
+    "test": "npm run test:server && npm run test:api && npm run test:experience",
+    "check:secrets": "node scripts/check-frontend-secrets.mjs",
+    "inspect:supabase": "node scripts/inspect-supabase.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
-    "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.446.0",
     "qrcode": "^1.5.4",
@@ -22,6 +28,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14",
     "@eslint/js": "^9.9.1",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.5",
@@ -38,5 +45,8 @@
     "typescript-eslint": "^8.3.0",
     "vercel": "^65.15.0",
     "vite": "^7.3.7"
+  },
+  "overrides": {
+    "tar": "^7.5.23"
   }
 }

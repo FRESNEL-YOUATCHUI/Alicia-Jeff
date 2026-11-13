@@ -1,0 +1,95 @@
+{
+  "baseline": "7c40378",
+  "files": [
+    {
+      "file": "src/index.css",
+      "comparison": "text with LF line endings",
+      "sha256": "6317f777a21996dee1f06007954631e8cc5dea996025649938f260ba3bf9084a",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/tickets.ts",
+      "comparison": "text with LF line endings",
+      "sha256": "f453b0e4f32e94e79b2e5a9985f7461d3679be40cd9fabe3b466f01fa0385163",
+      "unchanged": true
+    },
+    {
+      "file": "src/components/RsvpSection.tsx",
+      "comparison": "text with LF line endings",
+      "sha256": "3aaabd387cef3d99373c9101dd6fe8cfde316f22bd0c93e4e535429d5275bdbe",
+      "unchanged": true
+    },
+    {
+      "file": "src/components/EnvelopeOpening.tsx",
+      "comparison": "text with LF line endings",
+      "sha256": "7b44d61e68d0da2b67aade2fc39d878b617b6e9cbe801979c2ea84b6d904012f",
+      "unchanged": true
+    },
+    {
+      "file": "src/components/Celebration.tsx",
+      "comparison": "text with LF line endings",
+      "sha256": "2c2bc449c5dac5dcd5f2c2f5299d7e9e9ef196e5e0a8849cbdd0e31ebabcc230",
+      "unchanged": true
+    },
+    {
+      "file": "src/lib/useGuidedScroll.ts",
+      "comparison": "text with LF line endings",
+      "sha256": "5bea8734b26a714b84096147998795478ddaffb121b03b8c0a35cb6efdd2947c",
+      "unchanged": true
+    },
+    {
+      "file": "server/index.mjs",
+      "comparison": "text with LF line endings",
+      "sha256": "f0841cea6ac5226c58616340b5f82d7a85010aeacf8996a30f215d94f3d7ded9",
+      "unchanged": true
+    },
+    {
+      "file": "server/server.test.mjs",
+      "comparison": "text with LF line endings",
+      "sha256": "bbab7e4b9a99e0364a910e0abbfdfa0cd78d4e5d5f0be3c8e42b6815e7cb3ce0",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/alicia.webp",
+      "comparison": "binary",
+      "sha256": "1265271f26fac03fda84adbcc309e67c722ff6779d35e4c43c3e48c5ef59480a",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/couple.jpg",
+      "comparison": "binary",
+      "sha256": "5caeb7c0dfefae23a7348b45f813eade4958d7796befa4a6ce102d49471d3938",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/favicon.svg",
+      "comparison": "text with LF line endings",
+      "sha256": "60a1a9756784a7641234b7d5085d5554f853f29eb51ff29b0ad62f10fc1f614e",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/invitation.png",
+      "comparison": "binary",
+      "sha256": "7c28a6b85f78a85269e3a3c5f8d45cba563a2a944a09ade61e96e922c5a01f33",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/jeff-decor.webp",
+      "comparison": "binary",
+      "sha256": "4231bb719840850a4f2d15c2fffca3301b2ad81e8559bdaecc0764b7c6dad522",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/enveloppe-aj.webp",
+      "comparison": "binary",
+      "sha256": "77f56ba04aa021667a3b9cfc59402ec647ac2a49922644ed240fb02dee22a536",
+      "unchanged": true
+    },
+    {
+      "file": "public/wedding/music.mp4",
+      "comparison": "binary",
+      "sha256": "6629436fcdcdc584621a05940bed68539a10c04062090ef4afbe27be9a23c26f",
+      "unchanged": true
+    }
+  ]
+}

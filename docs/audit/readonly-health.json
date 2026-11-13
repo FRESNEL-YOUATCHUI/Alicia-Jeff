@@ -1,0 +1,38 @@
+{
+  "inspected_at": "2026-11-13T21:24:26.220Z",
+  "read_only": true,
+  "bucket": {
+    "available": true,
+    "private": true,
+    "max_bytes": null,
+    "mime_types": null
+  },
+  "table_counts": {
+    "wedding_albums": {
+      "count": 3
+    },
+    "wedding_photos": {
+      "count": 0
+    },
+    "wedding_rsvps": {
+      "count": 0
+    },
+    "wedding_messages": {
+      "count": 0
+    },
+    "wedding_staff": {
+      "count": 1
+    }
+  },
+  "settings": {
+    "id": 1,
+    "gallery_published": false,
+    "release_at": "2026-12-18T15:00:00+00:00"
+  },
+  "local_legacy_counts": {
+    "responses": 0,
+    "messages": 0,
+    "albums": 0,
+    "photos": 0
+  }
+}

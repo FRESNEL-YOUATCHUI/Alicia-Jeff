@@ -1,0 +1,21 @@
+table_name,constraint_name,definition
+wedding_albums,wedding_albums_pkey,PRIMARY KEY (id)
+wedding_photos,wedding_photos_album_id_fkey,FOREIGN KEY (album_id) REFERENCES wedding_albums(id) ON DELETE CASCADE
+wedding_photos,wedding_photos_pkey,PRIMARY KEY (id)
+wedding_photos,wedding_photos_storage_path_key,UNIQUE (storage_path)
+wedding_settings,wedding_settings_id_check,CHECK ((id = 1))
+wedding_settings,wedding_settings_pkey,PRIMARY KEY (id)
+wedding_staff,wedding_staff_pkey,PRIMARY KEY (user_id)
+wedding_staff,wedding_staff_role_check,"CHECK ((role = ANY (ARRAY['photographer'::text, 'admin'::text])))"
+wedding_staff,wedding_staff_user_id_fkey,FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+wedding_rsvps,wedding_rsvps_first_name_check,CHECK ((length(TRIM(BOTH FROM first_name)) > 0))
+wedding_rsvps,wedding_rsvps_last_name_check,CHECK ((length(TRIM(BOTH FROM last_name)) > 0))
+wedding_rsvps,wedding_rsvps_participants_check,CHECK (((participants >= 1) AND (participants <= 20)))
+wedding_rsvps,wedding_rsvps_pkey,PRIMARY KEY (id)
+wedding_rsvps,wedding_rsvps_ref_hash_key,UNIQUE (ref_hash)
+wedding_messages,wedding_messages_author_check,CHECK ((length(TRIM(BOTH FROM author)) > 0))
+wedding_messages,wedding_messages_body_check,CHECK ((length(TRIM(BOTH FROM body)) > 0))
+wedding_messages,wedding_messages_pkey,PRIMARY KEY (id)
+wedding_messages,wedding_messages_ref_hash_key,UNIQUE (ref_hash)
+wedding_messages,wedding_messages_response_id_fkey,FOREIGN KEY (response_id) REFERENCES wedding_rsvps(id) ON DELETE SET NULL
+wedding_messages,wedding_messages_response_id_key,UNIQUE (response_id)

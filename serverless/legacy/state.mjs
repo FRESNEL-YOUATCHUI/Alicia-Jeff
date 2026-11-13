@@ -1,6 +1,6 @@
 
-import { requirePhotographer } from '../_lib/auth.mjs';
-import { supabaseAdmin } from '../_lib/supabase.mjs';
+import { requirePhotographer } from './auth.mjs';
+import { supabaseAdmin } from './supabase.mjs';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');

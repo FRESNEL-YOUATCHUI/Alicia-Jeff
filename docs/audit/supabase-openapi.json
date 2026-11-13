@@ -1,0 +1,244 @@
+{
+  "inspected_at": "2026-11-13T21:21:03.984Z",
+  "read_only": true,
+  "definitions": {
+    "wedding_rsvps": {
+      "required": [
+        "id",
+        "ref_hash",
+        "first_name",
+        "last_name",
+        "participants",
+        "song",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "ref_hash": {
+          "format": "character varying",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "first_name": {
+          "format": "character varying",
+          "maxLength": 80,
+          "type": "string"
+        },
+        "last_name": {
+          "format": "character varying",
+          "maxLength": 80,
+          "type": "string"
+        },
+        "participants": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "song": {
+          "default": "",
+          "format": "character varying",
+          "maxLength": 200,
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "wedding_messages": {
+      "required": [
+        "id",
+        "author",
+        "body",
+        "hidden",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "response_id": {
+          "description": "Note:\nThis is a Foreign Key to `wedding_rsvps.id`.<fk table='wedding_rsvps' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "ref_hash": {
+          "format": "character varying",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "author": {
+          "format": "character varying",
+          "maxLength": 80,
+          "type": "string"
+        },
+        "body": {
+          "format": "character varying",
+          "maxLength": 2000,
+          "type": "string"
+        },
+        "hidden": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "wedding_albums": {
+      "required": [
+        "id",
+        "title",
+        "published",
+        "hidden",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "title": {
+          "format": "character varying",
+          "maxLength": 120,
+          "type": "string"
+        },
+        "description": {
+          "format": "text",
+          "type": "string"
+        },
+        "published": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "hidden": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "wedding_settings": {
+      "required": [
+        "id",
+        "gallery_published",
+        "release_at"
+      ],
+      "properties": {
+        "id": {
+          "default": 1,
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "int32",
+          "type": "integer"
+        },
+        "gallery_published": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "release_at": {
+          "default": "2026-12-18 15:00:00+00",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "wedding_photos": {
+      "required": [
+        "id",
+        "album_id",
+        "storage_path",
+        "hidden",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "default": "gen_random_uuid()",
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "album_id": {
+          "description": "Note:\nThis is a Foreign Key to `wedding_albums.id`.<fk table='wedding_albums' column='id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "storage_path": {
+          "format": "text",
+          "type": "string"
+        },
+        "caption": {
+          "format": "character varying",
+          "maxLength": 200,
+          "type": "string"
+        },
+        "hidden": {
+          "default": false,
+          "format": "boolean",
+          "type": "boolean"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "wedding_staff": {
+      "required": [
+        "user_id",
+        "role",
+        "created_at"
+      ],
+      "properties": {
+        "user_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "role": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

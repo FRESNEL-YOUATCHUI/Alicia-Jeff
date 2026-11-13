@@ -1,0 +1,63 @@
+{
+  "checked_at": "2026-11-13T21:45:13.605Z",
+  "read_only": true,
+  "routing_passed": true,
+  "database_api_ready": false,
+  "readiness": {
+    "status": 503,
+    "code": "schema_required"
+  },
+  "results": [
+    {
+      "path": "/api/health",
+      "mode": "anonymous",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8"
+    },
+    {
+      "path": "/api/admin/state",
+      "mode": "anonymous",
+      "status": 401,
+      "content_type": "application/json; charset=utf-8",
+      "code": "authentication_required"
+    },
+    {
+      "path": "/api/admin/state",
+      "mode": "invalid_token",
+      "status": 401,
+      "content_type": "application/json; charset=utf-8",
+      "code": "invalid_token"
+    },
+    {
+      "path": "/api/inconnue",
+      "mode": "anonymous",
+      "status": 404,
+      "content_type": "application/json; charset=utf-8",
+      "code": "not_found"
+    },
+    {
+      "path": "/",
+      "mode": "anonymous",
+      "status": 200,
+      "content_type": "text/html"
+    },
+    {
+      "path": "/src/main.tsx",
+      "mode": "anonymous",
+      "status": 200,
+      "content_type": "text/javascript"
+    },
+    {
+      "path": "/wedding/jeff-decor.webp",
+      "mode": "anonymous",
+      "status": 200,
+      "content_type": "image/webp"
+    },
+    {
+      "path": "/wedding/music.mp4",
+      "mode": "anonymous",
+      "status": 200,
+      "content_type": "video/mp4"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import {CelebrationBurst,FloatingFlowers} from './components/Celebration';
 import EnvelopeOpening from './components/EnvelopeOpening';
 import RsvpSection from './components/RsvpSection';
 import Souvenirs from './components/Souvenirs';
-import { testSupabase } from './lib/testSupabase';
+
 
 
 const DATE='2026-12-18T15:00:00Z';
@@ -16,12 +16,6 @@ function Botanical({className=''}:{className?:string}){
  return <svg className={`botanical ${className}`} viewBox="0 0 160 240" fill="none" aria-hidden="true"><path d="M30 235C75 170 80 91 134 8" stroke="currentColor" strokeWidth="1.4"/>{[[57,181,-40],[75,145,30],[84,112,-35],[104,76,32],[120,41,-30]].map(([x,y,r],i)=><ellipse key={i} cx={x} cy={y} rx="13" ry="32" transform={`rotate(${r} ${x} ${y})`} fill="currentColor" opacity=".65"/>)}</svg>;
 }
 export default function App(){
-    // Test temporaire de connexion Supabase
-  useEffect(() => {
-    void testSupabase();
-  }, []);
-
-  // Conserver tout le reste du code existant
  const [opening,setOpening]=useState(true),[unsealing,setUnsealing]=useState(false),[burst,setBurst]=useState(false),[menu,setMenu]=useState(false);
  const [count,setCount]=useState(()=>getCountdown(DATE)),[musicPlaying,setMusicPlaying]=useState(false),[muted,setMuted]=useState(false),[musicError,setMusicError]=useState('');
  const [memoriesOpen,setMemoriesOpen]=useState(false),[revision,setRevision]=useState(0);

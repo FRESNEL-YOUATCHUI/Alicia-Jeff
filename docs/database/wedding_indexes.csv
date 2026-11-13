@@ -1,0 +1,14 @@
+tablename,indexname,indexdef
+wedding_albums,wedding_albums_pkey,CREATE UNIQUE INDEX wedding_albums_pkey ON public.wedding_albums USING btree (id)
+wedding_messages,wedding_messages_pkey,CREATE UNIQUE INDEX wedding_messages_pkey ON public.wedding_messages USING btree (id)
+wedding_messages,wedding_messages_response_id_key,CREATE UNIQUE INDEX wedding_messages_response_id_key ON public.wedding_messages USING btree (response_id)
+wedding_messages,wedding_messages_ref_hash_key,CREATE UNIQUE INDEX wedding_messages_ref_hash_key ON public.wedding_messages USING btree (ref_hash)
+wedding_messages,idx_wedding_messages_visible,CREATE INDEX idx_wedding_messages_visible ON public.wedding_messages USING btree (created_at DESC) WHERE (hidden = false)
+wedding_photos,wedding_photos_pkey,CREATE UNIQUE INDEX wedding_photos_pkey ON public.wedding_photos USING btree (id)
+wedding_photos,wedding_photos_storage_path_key,CREATE UNIQUE INDEX wedding_photos_storage_path_key ON public.wedding_photos USING btree (storage_path)
+wedding_photos,idx_photos_album,"CREATE INDEX idx_photos_album ON public.wedding_photos USING btree (album_id, created_at)"
+wedding_rsvps,wedding_rsvps_pkey,CREATE UNIQUE INDEX wedding_rsvps_pkey ON public.wedding_rsvps USING btree (id)
+wedding_rsvps,wedding_rsvps_ref_hash_key,CREATE UNIQUE INDEX wedding_rsvps_ref_hash_key ON public.wedding_rsvps USING btree (ref_hash)
+wedding_rsvps,idx_wedding_rsvps_created,CREATE INDEX idx_wedding_rsvps_created ON public.wedding_rsvps USING btree (created_at DESC)
+wedding_settings,wedding_settings_pkey,CREATE UNIQUE INDEX wedding_settings_pkey ON public.wedding_settings USING btree (id)
+wedding_staff,wedding_staff_pkey,CREATE UNIQUE INDEX wedding_staff_pkey ON public.wedding_staff USING btree (user_id)

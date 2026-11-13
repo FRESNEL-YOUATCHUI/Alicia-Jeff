@@ -1,0 +1,6 @@
+tablename,policyname,roles,cmd,qual,with_check
+wedding_albums,Read published albums,"{anon,authenticated}",SELECT,((published = true) AND (hidden = false)),null
+wedding_photos,Read published photos,"{anon,authenticated}",SELECT,"((hidden = false) AND (EXISTS ( SELECT 1
+   FROM wedding_albums a
+  WHERE ((a.id = wedding_photos.album_id) AND (a.published = true) AND (a.hidden = false)))))",null
+wedding_staff,Staff can read own role,{authenticated},SELECT,(user_id = ( SELECT auth.uid() AS uid)),null

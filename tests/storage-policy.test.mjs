@@ -5,7 +5,8 @@ import {database} from './database.mjs';
 test('storage restrictive policy blocks a broad permissive policy without changing other buckets',async()=>{
  const {pg}=await database();
  try{
-  await pg.exec("create schema storage;create table storage.buckets(id text primary key);alter table storage.buckets enable row level security;grant all on storage.buckets to anon,authenticated,service_role;create policy broad_bucket_access on storage.buckets for all to anon,authenticated using(true) with check(true);insert into storage.buckets values('wedding-photos'),('other-bucket');create table storage.objects(id uuid primary key,bucket_id text not null);alter table storage.objects enable row level security;grant usage on schema storage to anon,authenticated,service_role;grant all on storage.objects to anon,authenticated,service_role;create policy broad_access on storage.objects for all to anon,authenticated using(true) with check(true);insert into storage.objects values(gen_random_uuid(),'wedding-photos'),(gen_random_uuid(),'other-bucket');");
+  await pg.exec(await fs.readFile(new URL('./storage-fixture.sql',import.meta.url),'utf8'));
+  await pg.exec('create policy broad_bucket_access on storage.buckets for all to anon,authenticated using(true) with check(true);create policy broad_access on storage.objects for all to anon,authenticated using(true) with check(true);');
   const sql=await fs.readFile(new URL('../supabase/migrations/003_private_storage_access.sql',import.meta.url),'utf8');
   await pg.exec(sql);await pg.exec(sql);
   await pg.exec('set role authenticated');

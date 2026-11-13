@@ -1,17 +1,6 @@
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-export function parseCsv(input){
- const rows=[];let row=[],field='',quoted=false;
- for(let i=0;i<input.length;i++){
-  const c=input[i];
-  if(c==='"'){if(quoted&&input[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
-  else if(c===','&&!quoted){row.push(field);field='';}
-  else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&input[i+1]==='\n')i++;row.push(field);if(row.some(Boolean))rows.push(row);row=[];field='';}
-  else field+=c;
- }
- if(field||row.length){row.push(field);rows.push(row);}
- const headers=rows.shift();return rows.map(values=>Object.fromEntries(headers.map((h,i)=>[h,values[i]])));
-}
+import {parseCsv} from './lib/csv.mjs';
 const root='docs/database/';
 const sources=['wedding_columns.csv','wedding_constraints.csv','wedding_policies.csv'];
 const [columns,constraints,policies]=sources.map(f=>parseCsv(fs.readFileSync(root+f,'utf8')));

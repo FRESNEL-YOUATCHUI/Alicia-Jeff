@@ -49,3 +49,7 @@ Les trois CSV `docs/database/wedding_{columns,constraints,policies}.csv` fournis
 - Les politiques publiques albums/photos omettent `gallery_published` et `release_at`. L’accès direct est donc révoqué dans une migration dédiée ; la consultation passe par les API qui appliquent ces deux règles.
 - Lecture seule réelle : trois albums, aucun RSVP/message/photo, un compte staff, bucket privé. Aucune donnée historique locale à importer. Les limites MIME/taille du bucket ne sont pas configurées.
 - Aucun SQL hébergé exécuté ; les modifications de permissions proposées restent soumises à accord explicite.
+
+## Complément Storage après réception des cinq exports
+
+Les cinq fichiers storage_*.csv fournis sont désormais analysés : 44 grants explicites, RLS activé sur objects et buckets, et aucune politique exportée. Les quatre privilèges SQL de lignes sont vrais pour les six couples rôle/table ; ils ne suffisent pas à autoriser des lignes lorsque RLS applique son refus par défaut. Les tests locaux utilisent un propriétaire synthétique et les rôles Supabase standards, car ces attributs ne sont pas inclus dans les exports. Aucun accès public Storage n’est déduit des seuls grants. Le durcissement 003 reste facultatif et non appliqué. Voir SECURITE-SUPABASE.md et audit/storage-permissions.json.

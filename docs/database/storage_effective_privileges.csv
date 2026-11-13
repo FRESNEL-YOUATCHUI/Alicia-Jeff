@@ -1,0 +1,7 @@
+role_name,table_name,can_select,can_insert,can_update,can_delete
+anon,buckets,true,true,true,true
+authenticated,buckets,true,true,true,true
+service_role,buckets,true,true,true,true
+anon,objects,true,true,true,true
+authenticated,objects,true,true,true,true
+service_role,objects,true,true,true,true

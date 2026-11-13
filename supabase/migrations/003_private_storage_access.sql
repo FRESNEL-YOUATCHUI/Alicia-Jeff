@@ -1,7 +1,15 @@
 -- PROPOSAL ONLY. Explicit owner approval is required before hosted execution.
+-- OPTIONAL defense in depth: the exported zero-policy configuration already defaults to deny.
 -- Restrictive policies deny only the wedding bucket, without granting any new access.
 begin;
-do $$
+do $bucket$
+begin
+ if to_regclass('storage.buckets') is null then raise exception 'Storage schema unavailable. Stop and audit.';end if;
+ if not exists(select 1 from storage.buckets where id='wedding-photos' and public=false) then
+  raise exception 'The wedding bucket must already exist and remain private. Stop and audit.';
+ end if;
+end $bucket$;
+do $hardening$
 declare t text;policy_name text;column_name text;expected text;existing record;
 begin
  foreach t in array array['objects','buckets'] loop
@@ -22,5 +30,5 @@ begin
    raise exception 'Unexpected existing storage protection on %. Stop and re-audit.',t;
   end if;
  end loop;
-end $$;
+end $hardening$;
 commit;

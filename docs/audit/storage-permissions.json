@@ -1,0 +1,123 @@
+{
+  "inspected_from_exports": true,
+  "sources": [
+    {
+      "file": "storage_bucket.csv",
+      "sha256": "6f721273b5560dedf45a3fbfa801abf15fcdac2b583bde13485c9bdc1d7795de",
+      "rows": 1
+    },
+    {
+      "file": "storage_rls.csv",
+      "sha256": "6d5e7d20f4e0bc87cc91204332724e53e0541df0ea15b31a79daf393da0c040b",
+      "rows": 2
+    },
+    {
+      "file": "storage_policies.csv",
+      "sha256": "c7f5e7d5d1b3fe042711face1e2e2f95335712dc05696d6ce149d44e30250a07",
+      "rows": 1
+    },
+    {
+      "file": "storage_grants.csv",
+      "sha256": "20afef40a96954ca8883c63c8899059da40d6e3c5e7fc29e0e891609436b7128",
+      "rows": 44
+    },
+    {
+      "file": "storage_effective_privileges.csv",
+      "sha256": "74c738106e1b340a4ac3fcf5c177110774da6a1a8520b72ebeaf01b578645a8a",
+      "rows": 6
+    }
+  ],
+  "bucket": {
+    "id": "wedding-photos",
+    "private": true,
+    "file_size_limit": null,
+    "allowed_mime_types": null
+  },
+  "policy_count": 0,
+  "explicit_grant_rows": 44,
+  "matrix": [
+    {
+      "role": "anon",
+      "table": "objects",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "default_deny_for_nonowner_without_bypassrls"
+    },
+    {
+      "role": "anon",
+      "table": "buckets",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "default_deny_for_nonowner_without_bypassrls"
+    },
+    {
+      "role": "authenticated",
+      "table": "objects",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "default_deny_for_nonowner_without_bypassrls"
+    },
+    {
+      "role": "authenticated",
+      "table": "buckets",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "default_deny_for_nonowner_without_bypassrls"
+    },
+    {
+      "role": "service_role",
+      "table": "objects",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "privileged_server_role_requires_bypass_or_owner_check"
+    },
+    {
+      "role": "service_role",
+      "table": "buckets",
+      "sql_privileges": {
+        "SELECT": true,
+        "INSERT": true,
+        "UPDATE": true,
+        "DELETE": true
+      },
+      "rls_enabled": true,
+      "policies": 0,
+      "row_access_assessment": "privileged_server_role_requires_bypass_or_owner_check"
+    }
+  ],
+  "limitations": [
+    "Exports do not include role BYPASSRLS, ownership, inherited memberships, schema/column privileges or effective TRUNCATE/REFERENCES/TRIGGER.",
+    "PostgreSQL tests model ordinary anon/authenticated and the standard privileged service_role on minimal synthetic Storage tables.",
+    "No hosted permission change, SQL mutation, object upload/deletion or signed-capability network test is performed."
+  ]
+}

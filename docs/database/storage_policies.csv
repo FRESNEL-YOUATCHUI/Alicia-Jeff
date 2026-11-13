@@ -1,0 +1,2 @@
+policyname,schemaname,tablename,roles,cmd,qual,with_check
+NO_POLICY_DEFINED,null,null,null,null,null,null

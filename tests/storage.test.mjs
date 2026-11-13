@@ -42,9 +42,13 @@ test('stored-object metadata is checked and Range downloads stay bounded',async(
  const ignoring=new PhotoStorage(client,async()=>new Response(data,{status:200}));
  await assert.rejects(()=>ignoring.verify(intent),e=>e.status===503);
 });
-test('public bucket and failed signing are refused without leaking storage paths',async()=>{
+test('a public bucket is refused before signing, authorization or finalization',async()=>{
  const client={storage:{from:()=>({}),getBucket:async()=>({data:{public:true}})}};
- await assert.rejects(()=>new PhotoStorage(client).privateBucket(),e=>e.code==='private_storage_required');
+ const storage=new PhotoStorage(client);
+ await assert.rejects(()=>storage.privateBucket(),e=>e.code==='private_storage_required');
+ await assert.rejects(()=>storage.uploadToken({storage_path:'albums/test.png'}),e=>e.code==='private_storage_required');
+ await assert.rejects(()=>storage.sign([{id:'test',storage_path:'albums/test.png'}]),e=>e.code==='private_storage_required');
+ await assert.rejects(()=>storage.verify({storage_path:'albums/test.png'}),e=>e.code==='private_storage_required');
 });
 test('missing server secrets fail closed; publishable keys cannot configure the backend',()=>{
  assert.throws(()=>serverConfig({}),e=>e.status===503);

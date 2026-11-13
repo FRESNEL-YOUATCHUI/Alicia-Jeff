@@ -26,9 +26,9 @@ Les empreintes de 15 fichiers confirment la conservation du contenu de la feuill
 
 Ordre : `001_serverless.sql`, `002_api_only_access.sql`, `003_private_storage_access.sql` dans `supabase/migrations/`. Détails dans `supabase/README.md`.
 
-001 ajoute deux tables de coordination avec RLS, index et RPC serveur. Réutilise les contraintes existantes `ref_hash`, `response_id` et `storage_path`. 002 retire les droits directs navigateur métier et conserve la lecture de son propre rôle. 003 propose des politiques restrictives sur les deux tables Storage, ciblées sur le bucket du mariage.
+001 ajoute deux tables de coordination avec RLS, index et RPC serveur. Réutilise les contraintes existantes `ref_hash`, `response_id` et `storage_path`. 002 retire les droits directs navigateur métier et conserve la lecture de son propre rôle. 003, optionnelle après analyse des exports Storage, propose des politiques restrictives sur les deux tables Storage, ciblées sur le bucket du mariage.
 
-Aucune table métier ni aucun album n’est recréé. Les contraintes et UUID existants sont conservés. Les scripts sont transactionnels, avec précontrôles et répétition testée localement. **Ne pas les appliquer sans votre accord et la revue complémentaire Storage.**
+Aucune table métier ni aucun album n’est recréé. Les contraintes et UUID existants sont conservés. Les scripts sont transactionnels, avec précontrôles et répétition testée localement. **Ne pas les appliquer sans votre accord. Les exports Storage ont été analysés ; la migration 003 est un durcissement facultatif et non la correction d’une fuite établie.**
 
 ## Routes API
 
@@ -62,7 +62,7 @@ Le binaire photo ne transite plus par `POST /api/admin/albums/<id>/photos` ; ce 
 | --- | --- |
 | `npm run typecheck` | Réussi |
 | `npm run test:server` | 7 tests historiques réussis |
-| Nouveaux tests API/SQL/Storage/QR/cron | 32 tests réussis au total, dont le test de grants ajouté après le lancement complet initial |
+| Nouveaux tests API/SQL/Storage/QR/cron | 38 tests réussis lors du nouveau passage complet, dont les 6 cas de reproduction SQL/RLS Storage |
 | `npm run test:experience` | 7 assertions réussies |
 | `npm run build` | Réussi ; médias sélectionnés copiés dans dist après le build |
 | `npm run check:secrets` | 7 artifacts texte frontend contrôlés, aucune clé privilégiée détectée |
@@ -101,8 +101,9 @@ Alternative `npm run dev` : Vite 5173 + mêmes handlers API 8787. Historique con
 
 ## Checklist avant production
 
-- [ ] Compléter et examiner les cinq exports Storage et l’export complet des grants métier (le fichier reçu compte 100 lignes).
-- [ ] Sauvegarder la configuration/le schéma et obtenir l’accord explicite pour les trois migrations et changements de permissions.
+- [x] Examiner les cinq exports Storage : RLS activé, aucune politique, refus par défaut pour les rôles ordinaires malgré les grants SQL.
+- [ ] Compléter l’export des grants métier (le fichier reçu compte 100 lignes) et vérifier les attributs des rôles/propriétaires avant une certification exhaustive.
+- [ ] Sauvegarder la configuration/le schéma et obtenir l’accord explicite pour les migrations 001/002 ; décider séparément du durcissement facultatif 003.
 - [ ] Appliquer les migrations autorisées dans l’ordre, vérifier les trois albums et leurs UUID.
 - [ ] Autoriser et configurer les limites du bucket : 20 MiB, JPEG/PNG/WebP ; conserver privé.
 - [ ] Tester les écritures sur le vrai projet avec données d’essai explicitement autorisées : RSVP/répétition/billet, message/modération et vrai photographe.
@@ -138,3 +139,9 @@ La modification préexistante de `.gitignore` ajoutant `.vercel` a été conserv
 [Réécritures Vercel](https://vercel.com/docs/routing/rewrites), [variables Vercel](https://vercel.com/docs/environment-variables), [protection du cron](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs). Le cron préparé n’existera en production qu’après votre déploiement ; ses appels utilisent le secret dédié. Les détails de sécurité et leurs limites figurent dans `SECURITE-SUPABASE.md`.
 
 Liste détaillée des fichiers : `docs/FICHIERS-MODIFIES.md`.
+
+## Complément après réception des exports Storage
+
+Les cinq fichiers `storage_*.csv` sont désormais analysés : 44 grants explicites, six couples rôle/table et aucune politique. Le refus RLS par défaut est reproduit dans les tests avec des rôles ordinaires, sans interpréter les booléens SQL comme une permission d’accès aux lignes. `service_role` reste réservé au serveur. Aucun privilège ou politique hébergé modifié.
+
+Le backend recontrôle le bucket privé avant la finalisation d’un import. Le précontrôle de 003 refuse un bucket devenu public sans modifier sa visibilité. Voir `docs/SECURITE-SUPABASE.md`, la matrice `docs/audit/storage-permissions.json` et `tests/storage-exports.test.mjs`.

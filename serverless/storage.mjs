@@ -59,6 +59,7 @@ export class PhotoStorage {
     return rows.map((p,i)=>{const {storage_path,...safe}=p;return{...safe,url:data[i].signedUrl,expires_at:new Date(Date.now()+SIGNED_TTL*1000).toISOString()};});
   }
   async verify(intent){
+    await this.privateBucket();
     const {data,error}=await this.bucket.info(intent.storage_path);
     if(error||!data)throw new ApiError(409,'upload_incomplete','La photographie n’a pas terminé son transfert. Réessayez la finalisation.');
     // SDK versions return camelCase or snake_case metadata.

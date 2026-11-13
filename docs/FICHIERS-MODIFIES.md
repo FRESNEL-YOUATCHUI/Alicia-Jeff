@@ -73,3 +73,30 @@ La modification initiale de `.gitignore` est conservée hors de ce commit. Les f
 | `vercel.json` | créé |
 | `vite.config.ts` | modifié |
 | `docs/FICHIERS-MODIFIES.md` | créé, ce manifeste |
+
+## Complément audit Storage
+
+Modifications locales après réception des cinq exports ; aucune modification distante de permissions.
+
+| Fichier | Action |
+| --- | --- |
+| `docs/AUDIT-INITIAL.md` | modifié |
+| `docs/RAPPORT-FINAL.md` | modifié |
+| `docs/SECURITE-SUPABASE.md` | modifié |
+| `docs/audit/storage-permissions.json` | créé |
+| `docs/database/storage_bucket.csv` | export fourni par le propriétaire |
+| `docs/database/storage_effective_privileges.csv` | export fourni par le propriétaire |
+| `docs/database/storage_grants.csv` | export fourni par le propriétaire |
+| `docs/database/storage_policies.csv` | export fourni par le propriétaire |
+| `docs/database/storage_rls.csv` | export fourni par le propriétaire |
+| `scripts/audit-storage-exports.mjs` | créé |
+| `scripts/build-schema-fixture.mjs` | modifié |
+| `scripts/lib/csv.mjs` | créé |
+| `serverless/storage.mjs` | modifié |
+| `supabase/README.md` | modifié |
+| `supabase/migrations/003_private_storage_access.sql` | modifié |
+| `tests/storage-exports.test.mjs` | créé |
+| `tests/storage-fixture.sql` | créé |
+| `tests/storage-policy.test.mjs` | modifié |
+| `tests/storage.test.mjs` | modifié |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

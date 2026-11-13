@@ -1,0 +1,12 @@
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createWeddingServer,localConfiguration} from '../server/index.mjs';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const config=await localConfiguration(root);
+const server=await createWeddingServer({...config,distDir:path.join(root,'dist'),allowLocalPreview:true});
+await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(8787,'127.0.0.1',resolve);});
+const viteEntry=path.join(path.dirname(fileURLToPath(import.meta.resolve('vite/package.json'))),'bin/vite.js');
+const child=spawn(process.execPath,[viteEntry,'--host','127.0.0.1','--port','5173','--strictPort'],{cwd:root,stdio:'inherit',windowsHide:true});
+const stop=()=>{child.kill();server.close();};
+process.on('SIGINT',stop);process.on('SIGTERM',stop);child.on('exit',()=>{server.close();});

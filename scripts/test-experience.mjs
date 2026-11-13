@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+import ts from 'typescript';
+const sourcePath=path.resolve('src/lib/useGuidedScroll.ts');
+const code=ts.transpileModule(fs.readFileSync(sourcePath,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+const exports={};new Function('require','exports',code)(createRequire(sourcePath),exports);
+const state={enabled:true,blocked:false,pointerDown:false,focusedField:false,hidden:false,idleMs:7000};
+assert.equal(exports.canAutoScroll(state),true);
+assert.equal(exports.canAutoScroll({...state,idleMs:6999}),false);
+for(const key of ['blocked','pointerDown','focusedField','hidden'])assert.equal(exports.canAutoScroll({...state,[key]:true}),false);
+assert.equal(exports.canAutoScroll({...state,enabled:false,idleMs:99999}),false);
+console.log('7 assertions réussies : pause utilisateur, délai de 7 secondes et reprise du défilement.');

@@ -1,5 +1,7 @@
 # Rapport après activation Supabase — Alicia & Jeff
 
+> Audit pré-déploiement complémentaire : voir [AUDIT-PREDEPLOIEMENT.md](AUDIT-PREDEPLOIEMENT.md), dont les six tests cron et la proposition d’ingestion non appliquée. Les résultats ci-dessous restent ceux de la validation après activation.
+
 14 novembre 2026, UTC. Dossier : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`.
 
 **L’activation autorisée est confirmée par l’export SQL fourni et les lectures réelles de l’API. `npm run verify` termine désormais avec le code 0. Le blocage schema_required a disparu.** Les parcours d’écriture et la connexion interactive du photographe restent à valider dans le navigateur ; ils ne sont pas présentés comme testés sur le service hébergé.

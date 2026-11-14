@@ -1,0 +1,125 @@
+{
+  "checked_at": "2026-11-14T19:51:54.397Z",
+  "read_only": true,
+  "hosted_mutations_performed": false,
+  "storage_configuration_applied": false,
+  "secrets_modified": false,
+  "authorized_real_cleanup_executed": false,
+  "deployments_triggered": false,
+  "github_push": false,
+  "http_checks": [
+    {
+      "name": "cron without authorization",
+      "method": "GET",
+      "status": 503,
+      "code": "cron_configuration_required",
+      "passed": true
+    },
+    {
+      "name": "cron ignores forged Vercel headers",
+      "method": "GET",
+      "status": 503,
+      "code": "cron_configuration_required",
+      "passed": true
+    },
+    {
+      "name": "cron with an unrelated bearer",
+      "method": "GET",
+      "status": 503,
+      "code": "cron_configuration_required",
+      "passed": true
+    },
+    {
+      "name": "query token does not authenticate cron",
+      "method": "GET",
+      "status": 503,
+      "code": "cron_configuration_required",
+      "passed": true
+    },
+    {
+      "name": "gateway rewrite without authorization",
+      "method": "GET",
+      "status": 503,
+      "code": "cron_configuration_required",
+      "passed": true
+    },
+    {
+      "name": "cron POST refused",
+      "method": "POST",
+      "status": 405,
+      "code": "method_not_allowed",
+      "passed": true
+    },
+    {
+      "name": "cron HEAD refused",
+      "method": "HEAD",
+      "status": 405,
+      "passed": true
+    },
+    {
+      "name": "cron OPTIONS refused",
+      "method": "OPTIONS",
+      "status": 405,
+      "code": "method_not_allowed",
+      "passed": true
+    }
+  ],
+  "counts_before": {
+    "wedding_albums": 3,
+    "wedding_photos": 0,
+    "wedding_settings": 1,
+    "wedding_staff": 1,
+    "wedding_rsvps": 0,
+    "wedding_messages": 0,
+    "wedding_api_limits": 0,
+    "wedding_api_uploads": 0
+  },
+  "cron_configuration": {
+    "local_secret_present": false,
+    "local_minimum_length_met": false,
+    "local_header_safe": false,
+    "local_example_value": false,
+    "local_reuses_backend_credential": false,
+    "production_variables_inspected": false
+  },
+  "bucket_current": {
+    "id": "wedding-photos",
+    "private": true,
+    "max_bytes": null,
+    "allowed_mime_types": null,
+    "global_limit_inspected": false
+  },
+  "ingestion_proposal": {
+    "file": "docs/storage-ingestion-proposal.json",
+    "backend_size_matches": true,
+    "backend_types_match": true,
+    "applied": false
+  },
+  "vercel_configuration": {
+    "cron_path": "/api/internal/uploads/cleanup",
+    "schedule": "0 3 * * *",
+    "schedule_timezone": "UTC",
+    "function_max_duration_seconds": 60,
+    "gateway_rewrite_matches": true,
+    "local_project_linked": false,
+    "production_configuration_inspected": false
+  },
+  "counts_after": {
+    "wedding_albums": 3,
+    "wedding_photos": 0,
+    "wedding_settings": 1,
+    "wedding_staff": 1,
+    "wedding_rsvps": 0,
+    "wedding_messages": 0,
+    "wedding_api_limits": 0,
+    "wedding_api_uploads": 0
+  },
+  "secret_files_unchanged": true,
+  "audit_passed": true,
+  "deployment_readiness": "conditional",
+  "pending": [
+    "Production CRON_SECRET presence/quality and active deployment configuration must be checked by owner.",
+    "Storage ingestion proposal not applied; global upload limit unverified.",
+    "Connected staff and valid write workflows still need manual acceptance."
+  ]
+}

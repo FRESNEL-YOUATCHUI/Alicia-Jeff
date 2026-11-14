@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-14T18:21:57.047Z",
+  "checked_at": "2026-11-14T19:56:52.456Z",
   "mode": "real production gateway + Vite middleware, actual configured Supabase",
   "read_only": true,
   "checks": [
@@ -117,7 +117,7 @@
     "ready": true
   },
   "compatibility": {
-    "checked_at": "2026-11-14T18:21:51.501Z",
+    "checked_at": "2026-11-14T19:56:52.304Z",
     "read_only": true,
     "no_visitor_rows_requested": true,
     "tables": [

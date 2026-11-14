@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-11-14T20:06:22.516Z",
+  "media_count": 7,
+  "all_media_copied": true,
+  "files": [
+    {
+      "asset": "alicia.webp",
+      "matches_build": true
+    },
+    {
+      "asset": "couple.jpg",
+      "matches_build": true
+    },
+    {
+      "asset": "enveloppe-aj.webp",
+      "matches_build": true
+    },
+    {
+      "asset": "favicon.svg",
+      "matches_build": true
+    },
+    {
+      "asset": "invitation.png",
+      "matches_build": true
+    },
+    {
+      "asset": "jeff-decor.webp",
+      "matches_build": true
+    },
+    {
+      "asset": "music.mp4",
+      "matches_build": true
+    }
+  ]
+}

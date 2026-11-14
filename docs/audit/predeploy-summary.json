@@ -1,0 +1,51 @@
+{
+  "checked_at": "2026-11-14T20:02:49.015Z",
+  "scope": "predeployment audit, ingestion proposal and cron protection; no deployment or secret/storage changes",
+  "audit_completed": true,
+  "deployment_readiness": "conditional",
+  "verify": {
+    "executed": true,
+    "exit_code": 0,
+    "historical_tests_passed": 7,
+    "api_sql_runtime_tests_passed": 68,
+    "experience_assertions_passed": 7,
+    "typecheck": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "frontend_secrets": "passed",
+    "runtime_http_checks_passed": 16
+  },
+  "cron": {
+    "isolated_tests_passed": 6,
+    "live_refusal_checks_passed": 8,
+    "protection_verified": true,
+    "local_secret_configured": false,
+    "production_configuration_inspected": false,
+    "authorized_real_cleanup_executed": false
+  },
+  "production_dependency_audit": {
+    "reported_vulnerabilities": 0,
+    "scope": "production dependencies only; no audit fix",
+    "packages_changed": false
+  },
+  "media": {
+    "verified": 7,
+    "all_match_build": true
+  },
+  "proposal": {
+    "file": "docs/storage-ingestion-proposal.json",
+    "applied": false,
+    "requires_distinct_authorization": true
+  },
+  "secrets_modified": false,
+  "private_files_unchanged": true,
+  "hosted_mutations_performed": false,
+  "policies_modified": false,
+  "deployments_triggered": false,
+  "github_push": false,
+  "pending": [
+    "Production CRON_SECRET presence/quality and active deployment configuration must be checked by owner.",
+    "Storage ingestion proposal not applied; global upload limit unverified.",
+    "Connected staff and valid write workflows still need manual acceptance."
+  ]
+}

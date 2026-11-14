@@ -228,3 +228,22 @@ Rapport SQL/API et documentation actualisés ; aucune écriture hébergée suppl
 | `docs/audit/preactivation-current-readonly.json` | modifié |
 | `scripts/verify-postactivation-readonly.mjs` | créé |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Audit pré-déploiement, ingestion et cron — 14 novembre 2026
+
+Audit, tests isolés et sondes réelles refusées uniquement. Aucun secret, Storage, données hébergées ou déploiement modifié. .gitignore et invitation.png préexistants exclus.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | modifié |
+| `docs/AUDIT-PREDEPLOIEMENT.md` | créé |
+| `docs/RAPPORT-POST-ACTIVATION.md` | modifié |
+| `docs/audit/local-runtime.json` | modifié |
+| `docs/audit/predeploy-build-assets.json` | créé |
+| `docs/audit/predeploy-dependencies.json` | créé |
+| `docs/audit/predeploy-readonly.json` | créé |
+| `docs/audit/predeploy-summary.json` | créé |
+| `docs/storage-ingestion-proposal.json` | créé |
+| `scripts/audit-predeploy-readonly.mjs` | créé |
+| `tests/cron-security.test.mjs` | créé |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

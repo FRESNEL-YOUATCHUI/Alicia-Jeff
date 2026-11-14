@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-11-14T19:54:20.219Z",
+  "scope": "production dependencies only; no audit fix",
+  "audit_available": true,
+  "vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "dependencies": {
+    "prod": 62,
+    "dev": 709,
+    "optional": 252,
+    "peer": 3,
+    "peerOptional": 0,
+    "total": 786
+  },
+  "findings": [],
+  "packages_changed": false
+}

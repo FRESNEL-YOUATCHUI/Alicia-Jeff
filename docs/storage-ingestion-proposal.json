@@ -1,0 +1,18 @@
+{
+  "status": "proposal_not_applied",
+  "requires_separate_owner_authorization": true,
+  "bucket": "wedding-photos",
+  "attributes": {
+    "public": false,
+    "fileSizeLimit": 20971520,
+    "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp"]
+  },
+  "minimum_global_upload_limit_bytes": 20971520,
+  "global_limit_inspected": false,
+  "notes": [
+    "20 MiB = 20971520 bytes, per file; this is not a total bucket quota.",
+    "Keep the existing private bucket; do not recreate it, change policies or delete objects.",
+    "The global Storage upload limit must allow this per-bucket limit; do not change other buckets or global settings automatically.",
+    "Backend type, size, dimensions and content-signature checks remain necessary."
+  ]
+}

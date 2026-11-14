@@ -56,3 +56,7 @@ La capture SQL réelle est maintenant reçue et validée ; le rollback privé et
 Tester dans le navigateur une confirmation/billet, un message et la connexion/opérations photographe avec vos propres comptes, sans partager d’identifiants. Les validations d’écriture automatisées utilisent uniquement les bases isolées.
 
 Prévoir les quatre variables Supabase dans les environnements Vercel nécessaires, plus `CRON_SECRET` (au moins 32 caractères) pour le nettoyage quotidien. Ce secret n’est pas configuré localement. Le bucket reste privé avec limites MIME/taille non définies ; leur éventuel durcissement nécessite une autorisation Storage distincte. Aucun secret n’a été modifié ici.
+
+## Audit pré-déploiement final
+
+Le rapport courant est [docs/AUDIT-PREDEPLOIEMENT.md](docs/AUDIT-PREDEPLOIEMENT.md) : vérification globale réussie, protection du cron testée et proposition privée JPEG/PNG/WebP à 20 Mio dans `docs/storage-ingestion-proposal.json`. Les limites ne sont pas appliquées ; aucun secret ni déploiement n’est modifié. CRON_SECRET est absent localement et sa présence en Production reste à vérifier ; le cron refuse l’exécution tant que sa configuration manque.

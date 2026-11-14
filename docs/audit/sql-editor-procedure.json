@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-11-14T11:53:55.992Z",
+  "hosted_sql_executed": false,
+  "hosted_permissions_changed": false,
+  "env_local_modified": false,
+  "credentials_requested": false,
+  "existing_activation_sources_unchanged": true,
+  "sources": [
+    {
+      "file": "supabase/activation/activate-serverless.sql",
+      "sha256_lf": "0f3799c3b3339ecff83463df8e8960e1e6141e3a12d0b380cf273983d5a7d1e0"
+    },
+    {
+      "file": "supabase/activation/preflight-backup-readonly.sql",
+      "sha256_lf": "a62507372138423c23c59a8be404a1dc91183799e1a18a35b94e03ed4612b721"
+    },
+    {
+      "file": "supabase/activation/verify-serverless-readonly.sql",
+      "sha256_lf": "f474d559c6481e7aa236c238cb2df4e62fbb5aadc3cf41273105ddced75581c0"
+    },
+    {
+      "file": "scripts/prepare-activation-verification.mjs",
+      "sha256_lf": "8d7f9c0d79062a8e67d707e4b069de801babe51e10c3fd66e44dd3ae11737198"
+    }
+  ],
+  "tests": {
+    "isolated_activation_and_rollback": 15,
+    "isolated_sql_editor_verification": 1,
+    "lint": "passed"
+  },
+  "sql_editor_result": "not executed in hosted SQL Editor; owner instructions only",
+  "requires_before_activation": [
+    "Complete preactivation JSON captured locally",
+    "Snapshot-specific permission/RLS/dependency review",
+    "Generate and rehearse matching rollback",
+    "Explicit final owner authorization"
+  ]
+}

@@ -174,3 +174,17 @@ Fichiers locaux de cette intervention depuis db51f84. Aucune sauvegarde personne
 | `tests/activation-audit.test.mjs` | créé |
 | `vite.config.ts` | modifié |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Procédure SQL Editor — 14 novembre 2026
+
+Aucune modification de .env.local ou de la base hébergée. Source d’activation inchangée.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | lien vers la procédure ajouté |
+| `docs/PROCEDURE-SUPABASE-SQL-EDITOR.md` | étapes SQL Editor, arrêts obligatoires et rollback |
+| `docs/audit/sql-editor-procedure.json` | empreintes et preuves sans données privées |
+| `scripts/prepare-activation-verification.mjs` | générateur local de contrôle SQL en lecture seule |
+| `supabase/activation/verify-serverless-readonly.sql` | neuf contrôles et empreintes métier après activation autorisée |
+| `tests/sql-editor-verification.test.mjs` | contrôle réel PostgreSQL isolé des résultats et dérives |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

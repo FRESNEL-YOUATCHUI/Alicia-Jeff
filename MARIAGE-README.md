@@ -46,3 +46,5 @@ Aucun push GitHub et aucun déploiement Vercel n’ont été effectués.
 L’audit SQL complémentaire et ses réserves sont dans [docs/AUDIT-ACTIVATION-SUPABASE.md](docs/AUDIT-ACTIVATION-SUPABASE.md). Aucun SQL d’activation n’a été exécuté sur le serveur hébergé. Une archive REST privée supplémentaire est conservée dans `.qa-artifacts/backups/` ; elle ne remplace pas la capture SQL transactionnelle/ACL nécessaire au rollback réel.
 
 `npm run audit:activation` exécute uniquement les tests PostgreSQL isolés. Le fichier `supabase/activation/rollback-serverless.sql` est un garde-fou : le vrai rollback doit être généré à partir de l’instantané complet avec `npm run prepare:rollback -- <snapshot.json>`, puis revu avant toute exécution autorisée.
+
+La procédure pas à pas pour la session Supabase déjà connectée est dans [docs/PROCEDURE-SUPABASE-SQL-EDITOR.md](docs/PROCEDURE-SUPABASE-SQL-EDITOR.md). Elle distingue la capture préalable en lecture seule, l’arrêt pour analyse/accord final, l’activation et son contrôle en lecture seule. Aucun changement de `.env.local` n’est requis.

@@ -48,3 +48,5 @@ L’audit SQL complémentaire et ses réserves sont dans [docs/AUDIT-ACTIVATION-
 `npm run audit:activation` exécute uniquement les tests PostgreSQL isolés. Le fichier `supabase/activation/rollback-serverless.sql` est un garde-fou : le vrai rollback doit être généré à partir de l’instantané complet avec `npm run prepare:rollback -- <snapshot.json>`, puis revu avant toute exécution autorisée.
 
 La procédure pas à pas pour la session Supabase déjà connectée est dans [docs/PROCEDURE-SUPABASE-SQL-EDITOR.md](docs/PROCEDURE-SUPABASE-SQL-EDITOR.md). Elle distingue la capture préalable en lecture seule, l’arrêt pour analyse/accord final, l’activation et son contrôle en lecture seule. Aucun changement de `.env.local` n’est requis.
+
+La capture SQL réelle est maintenant reçue et validée ; le rollback privé et la répétition adaptée sont documentés dans [docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md](docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md). L’activation hébergée attend toujours l’autorisation finale explicite.

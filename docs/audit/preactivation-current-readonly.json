@@ -1,0 +1,53 @@
+{
+  "checked_at": "2026-11-14T16:55:19.697Z",
+  "read_only": true,
+  "hosted_mutations_performed": false,
+  "private_snapshot_sha256": "2d3744623c280a02f081c392676bc2cb87326671aa47c3d23fe5508a05df62d3",
+  "configured_project": "mcnpagbcehupdbhshcea",
+  "business_tables": [
+    {
+      "table": "wedding_albums",
+      "count": 3,
+      "count_matches": true,
+      "matches": true
+    },
+    {
+      "table": "wedding_photos",
+      "count": 0,
+      "count_matches": true,
+      "matches": true
+    },
+    {
+      "table": "wedding_settings",
+      "count": 1,
+      "count_matches": true,
+      "matches": true
+    },
+    {
+      "table": "wedding_staff",
+      "count": 1,
+      "count_matches": true,
+      "matches": true
+    },
+    {
+      "table": "wedding_rsvps",
+      "count": 0,
+      "count_matches": true,
+      "matches": true
+    },
+    {
+      "table": "wedding_messages",
+      "count": 0,
+      "count_matches": true,
+      "matches": true
+    }
+  ],
+  "all_business_rows_still_match": true,
+  "bucket": {
+    "available": true,
+    "private": true,
+    "max_bytes": null,
+    "mime_types": null
+  },
+  "limitation": "REST reread is not a transaction; SQL privileges are reviewed from the prior transactionally captured snapshot. Writers must remain stopped until activation."
+}

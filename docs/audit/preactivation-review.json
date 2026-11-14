@@ -1,0 +1,80 @@
+{
+  "checked_at": "2026-11-14T16:58:24.435Z",
+  "captured_at": "2026-11-14T16:39:26.938968+00:00",
+  "hosted_mutations_performed": false,
+  "env_local_modified": false,
+  "source_sql_unchanged": true,
+  "snapshot": {
+    "private_file": ".qa-artifacts/backups/preactivation.json",
+    "sha256": "2d3744623c280a02f081c392676bc2cb87326671aa47c3d23fe5508a05df62d3",
+    "server_version": "17.11",
+    "executor": "postgres",
+    "table_counts": {
+      "wedding_rsvps": 0,
+      "wedding_staff": 1,
+      "wedding_albums": 3,
+      "wedding_photos": 0,
+      "wedding_messages": 0,
+      "wedding_settings": 1
+    },
+    "columns": 33,
+    "constraints": 20,
+    "indexes": 13
+  },
+  "checks": {
+    "snapshot_valid": true,
+    "six_business_tables": true,
+    "rls_all_enabled": true,
+    "owners_all_postgres": true,
+    "all_20_constraints_match": true,
+    "triggers_absent": true,
+    "no_column_grant_chains": true,
+    "browser_roles_ordinary": true,
+    "no_browser_parent_roles": true,
+    "no_browser_public_create": true,
+    "service_role_bypasses_rls": true,
+    "no_reserved_function_or_table_collision": true,
+    "staff_own_role_policy": true,
+    "storage_rls_default_deny": true,
+    "offline_roundtrip_passed": true,
+    "current_business_rows_match_capture": true,
+    "rollback_sha_matches_rehearsal": true
+  },
+  "technical_preflight_passed": true,
+  "final_owner_authorization_received": false,
+  "activation": {
+    "file": "supabase/activation/activate-serverless.sql",
+    "sha256_lf": "0f3799c3b3339ecff83463df8e8960e1e6141e3a12d0b380cf273983d5a7d1e0"
+  },
+  "rollback": {
+    "private_file": ".qa-artifacts/backups/rollback-serverless-1794674648187.sql",
+    "sha256": "72341c26e95082760a5519d297838243301d181f915cc9b69cfae5a010528117",
+    "generated": true,
+    "offline_rehearsal_passed": true,
+    "local_database_name_mapping": {
+      "hosted": "postgres",
+      "local": "template1",
+      "original_guard_rejected_wrong_database": true,
+      "only_database_name_literal_mapped_in_memory": true,
+      "production_rollback_file_unchanged": true
+    }
+  },
+  "confirmed_current_risks": {
+    "browser_truncate_and_maintain_grants": [
+      "wedding_albums",
+      "wedding_photos",
+      "wedding_settings",
+      "wedding_staff"
+    ],
+    "storage_limits_null": true
+  },
+  "remaining_conditions": [
+    "Explicit final authorization for this activation file",
+    "No schema/permissions/data changes after reviewed capture; pause writers",
+    "Hosted runtime and real write workflows to validate after authorized activation"
+  ],
+  "limits": [
+    "Supabase Auth users and Storage internals are represented by local fixtures, not a complete hosted platform clone.",
+    "PGlite minor version may differ from hosted PostgreSQL; no hosted migration or rollback has been executed."
+  ]
+}

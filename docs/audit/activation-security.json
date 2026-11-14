@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-11-14T10:51:15.517Z",
+  "checked_at": "2026-11-14T16:58:24.435Z",
   "hosted_mutations_performed": false,
   "hosted_activation_ready": false,
   "final_confirmation_received": false,
-  "sql_snapshot_available": false,
-  "production_specific_rollback_generated": false,
+  "sql_snapshot_available": true,
+  "production_specific_rollback_generated": true,
   "backup": {
     "captured_at": "2026-11-14T10:36:30.153Z",
     "checked_at": "2026-11-14T10:47:36.829Z",
@@ -128,8 +128,11 @@
     "ui_sql_access": "Stopped by Computer Use: current Windows browser URL could not be verified with sufficient confidence"
   },
   "remaining_gates": [
-    "Complete current SQL metadata/transactional backup",
-    "Generate and rehearse snapshot-specific hosted rollback",
-    "Owner final confirmation before any hosted activation"
-  ]
+    "Explicit final authorization for this activation file",
+    "No schema/permissions/data changes after reviewed capture; pause writers",
+    "Hosted runtime and real write workflows to validate after authorized activation"
+  ],
+  "technical_preflight_passed": true,
+  "hosted_activation_ready_for_final_authorization": true,
+  "review_file": "docs/audit/preactivation-review.json"
 }

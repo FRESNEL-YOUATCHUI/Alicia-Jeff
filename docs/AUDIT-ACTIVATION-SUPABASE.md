@@ -4,6 +4,8 @@
 
 **Décision : activation hébergée suspendue.** L’audit du code SQL, les corrections locales, la préparation du retour arrière et les essais PostgreSQL isolés sont terminés. Les droits SQL actuels complets ne sont pas encore capturés : il serait incorrect de déclarer le rollback spécifique à la production prêt ou la sauvegarde transactionnelle réalisée. L’accord de principe n’est pas une autorisation d’exécuter. Aucun DDL, changement de permission, écriture métier, push ou déploiement distant n’a été effectué.
 
+> Mise à jour après réception de la capture réelle : les précontrôles et le rollback sont désormais validés dans [VALIDATION-CAPTURE-AVANT-ACTIVATION.md](VALIDATION-CAPTURE-AVANT-ACTIVATION.md). Les mentions ci-dessous d’instantané manquant décrivent l’état initial ; aucune activation hébergée n’a été exécutée.
+
 ## 1. Périmètre et dépendances examinés
 
 Lecture intégrale de `001_serverless.sql`, `002_api_only_access.sql`, de leur assemblage `activate-serverless.sql`, du générateur, des six exports de structure/contraintes/index/RLS/politiques/droits métier, des cinq exports Storage, et des modules `handler`, `http`, `repository`, `supabase`, `storage`, `validation`. Les appels Auth et les accès frontend ont été confrontés aux nouveaux droits. La migration Storage optionnelle 003 est exclue.

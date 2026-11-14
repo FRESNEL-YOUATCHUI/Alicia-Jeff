@@ -188,3 +188,20 @@ Aucune modification de .env.local ou de la base hébergée. Source d’activatio
 | `supabase/activation/verify-serverless-readonly.sql` | neuf contrôles et empreintes métier après activation autorisée |
 | `tests/sql-editor-verification.test.mjs` | contrôle réel PostgreSQL isolé des résultats et dérives |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Validation de la capture Supabase réelle — 14 novembre 2026
+
+Captures et rollback privés conservés hors Git. Aucune modification de .env.local ni de la base hébergée.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | modifié |
+| `docs/AUDIT-ACTIVATION-SUPABASE.md` | modifié |
+| `docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md` | créé |
+| `docs/audit/activation-security.json` | modifié |
+| `docs/audit/preactivation-current-readonly.json` | créé |
+| `docs/audit/preactivation-rehearsal.json` | créé |
+| `docs/audit/preactivation-review.json` | créé |
+| `scripts/check-snapshot-current-readonly.mjs` | créé |
+| `scripts/rehearse-activation-snapshot.mjs` | créé |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

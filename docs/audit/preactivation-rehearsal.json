@@ -1,0 +1,62 @@
+{
+  "checked_at": "2026-11-14T16:53:53.157Z",
+  "hosted_mutations_performed": false,
+  "private_snapshot_sha256": "2d3744623c280a02f081c392676bc2cb87326671aa47c3d23fe5508a05df62d3",
+  "snapshot_captured_at": "2026-11-14T16:39:26.938968+00:00",
+  "hosted_version": "17.11",
+  "method": "Offline PGlite PostgreSQL major 17: exact captured business data, columns/defaults/constraints/indexes/policies/ACLs, browser role flags and public default grants; non-superuser postgres executor",
+  "limitations": [
+    "Supabase Auth users and Storage internals are represented by local fixtures, not a complete hosted platform clone.",
+    "PGlite minor version may differ from hosted PostgreSQL; no hosted migration or rollback has been executed."
+  ],
+  "local_version": "17.5",
+  "preconditions": {
+    "business_rows_exact": true,
+    "business_metadata_and_acls_exact": true,
+    "fingerprints_valid": true,
+    "indexes_exact": true,
+    "postgres_is_non_superuser": true,
+    "roles_and_relevant_defaults_reproduced": true
+  },
+  "activation_sha256_lf": "0f3799c3b3339ecff83463df8e8960e1e6141e3a12d0b380cf273983d5a7d1e0",
+  "local_executor_context": {
+    "database": "template1",
+    "executor": "postgres",
+    "can_create_public": true
+  },
+  "activation": {
+    "runs": 2,
+    "idempotent": true,
+    "business_data_unchanged": true,
+    "sql_editor_checks": {
+      "execute_server_only": true,
+      "server_table_access": true,
+      "three_valid_indexes": true,
+      "private_photo_bucket": true,
+      "eight_tables_with_rls": true,
+      "twenty_functions_present": true,
+      "functions_invoker_and_path": true,
+      "authenticated_own_role_lookup": true,
+      "browser_business_access_denied": true
+    }
+  },
+  "local_database_mapping": {
+    "hosted": "postgres",
+    "local": "template1",
+    "original_guard_rejected_wrong_database": true,
+    "only_database_name_literal_mapped_in_memory": true,
+    "production_rollback_file_unchanged": true
+  },
+  "rollback": {
+    "executed_offline": true,
+    "permissions_and_grant_options_restored": true,
+    "rls_and_policies_restored": true,
+    "private_rows_unchanged": true,
+    "indexes_restored": true,
+    "functions_restored": true,
+    "defaults_and_storage_untouched": true,
+    "coordination_tables_removed_only_while_empty": true,
+    "sha256": "72341c26e95082760a5519d297838243301d181f915cc9b69cfae5a010528117"
+  },
+  "passed": true
+}

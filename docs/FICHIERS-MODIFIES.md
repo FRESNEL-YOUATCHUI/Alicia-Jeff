@@ -100,3 +100,47 @@ Modifications locales après réception des cinq exports ; aucune modification d
 | `tests/storage-policy.test.mjs` | modifié |
 | `tests/storage.test.mjs` | modifié |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Diagnostic et fiabilisation Windows — 14 novembre 2026
+
+Liste exhaustive de cette intervention depuis 4d51634. .gitignore préexistant est exclu ; la modification préexistante de vite-vercel.mjs est corrigée conformément à la demande. Voir DIAGNOSTIC-VALIDATION.md pour les explications par fichier.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | modifié |
+| `docs/DIAGNOSTIC-VALIDATION.md` | créé |
+| `docs/RAPPORT-FINAL.md` | modifié |
+| `docs/audit/browser-validation.json` | créé |
+| `docs/audit/local-runtime.json` | créé |
+| `docs/audit/preserved-files.json` | modifié |
+| `docs/audit/runtime-diagnostic.json` | créé |
+| `docs/audit/vercel-readonly.json` | modifié |
+| `eslint.config.mjs` | créé |
+| `package-lock.json` | modifié |
+| `package.json` | modifié |
+| `scripts/check-preserved-files.mjs` | modifié |
+| `scripts/check-supabase-compatibility.mjs` | créé |
+| `scripts/configure-storage.mjs` | modifié |
+| `scripts/dev-local.mjs` | modifié |
+| `scripts/diagnose-runtime.mjs` | créé |
+| `scripts/lib/checks.mjs` | créé |
+| `scripts/lib/environment.mjs` | créé |
+| `scripts/lib/local-app.mjs` | créé |
+| `scripts/lib/processes.mjs` | créé |
+| `scripts/prepare-supabase-activation.mjs` | créé |
+| `scripts/vercel-dev.mjs` | modifié |
+| `scripts/verify-runtime.mjs` | créé |
+| `scripts/verify.mjs` | créé |
+| `scripts/vite-vercel.mjs` | modifié |
+| `server/server.test.mjs` | modifié |
+| `serverless/handler.mjs` | modifié |
+| `serverless/storage.mjs` | modifié |
+| `serverless/supabase.mjs` | modifié |
+| `serverless/validation.mjs` | modifié |
+| `src/lib/tickets.ts` | modifié |
+| `supabase/activation/activate-serverless.sql` | créé |
+| `tests/activation.test.mjs` | créé |
+| `tests/api.test.mjs` | modifié |
+| `tests/runtime.test.mjs` | créé |
+| `vite.config.ts` | modifié |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

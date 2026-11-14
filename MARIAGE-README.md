@@ -1,54 +1,42 @@
-# Alicia & Jeff — version Supabase / Vercel préparée localement
+# Alicia & Jeff — démarrage et validation
 
-Le rendu, l’enveloppe, les photos, les animations, la musique, le responsive et le parcours sur une seule page sont conservés. Aucun push GitHub ni déploiement n’a été effectué.
+Le projet se trouve dans `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`. Node.js 22.16.0 est utilisé pour les vérifications.
 
-**Activation en attente :** les migrations complémentaires sont préparées, mais ne sont pas appliquées au projet Supabase. Les API concernées répondent `503 schema_required` jusqu’à cette activation. Consulter `docs/RAPPORT-FINAL.md` et `supabase/README.md`.
+## Démarrer
 
-## Configuration locale
-
-Node.js 22. Renseigner localement les variables de `.env.example` dans `.env.local`, ignoré par Git. Deux variables publiques `VITE_SUPABASE_*` et deux variables serveur `SUPABASE_*`. Le cron nécessite également `CRON_SECRET` ; ne pas préfixer les secrets par `VITE_`.
-
-```powershell
-npm ci
-npm run dev:vercel
-```
-
-Ouvrir `http://localhost:3000/`. Sur Windows, le script utilise l’entrée JavaScript officielle fournie avec le CLI Vercel pour éviter les droits de liens symboliques de son installateur natif. Il charge `.env.local` sans afficher ses valeurs. Après modification des variables, redémarrer le processus.
-
-Alternative sans l’émulation Vercel :
+Depuis ce dossier :
 
 ```powershell
 npm run dev
 ```
 
-Elle sert Vite sur `http://127.0.0.1:5173/` et les mêmes handlers serverless sur le port 8787. Le proxy n’est activé que par ce lancement ; il ne détourne pas les fonctions de `vercel dev`.
+Ouvrir **http://127.0.0.1:3000/**. Une seule application Node lance Vite en middleware et les **vrais handlers de `api/gateway.mjs`**. Aucun serveur factice ni stockage JSON historique n’est utilisé pour remplacer Supabase. Un seul port HTTP est nécessaire ; Ctrl+C ferme le serveur et Vite. Si 3000 est déjà occupé, le lancement échoue clairement sans arrêter l’autre programme.
 
-## Parcours conservé
+La configuration locale existante `.env.local` est chargée depuis le dossier du projet, sans affichage ni modification de ses secrets. La page reste sur une seule page ; enveloppe, musique, animations, photos et responsive sont conservés.
 
-- Ouverture de l’enveloppe A & J, fleurs/cœurs/roses, musique en boucle et lecture automatique.
-- Actions tactiles, molette, clavier et navigation suspendent le défilement ; reprise après 7 secondes sans action. Les formulaires et la visionneuse suspendent aussi la lecture.
-- Confirmation uniquement dans « Et si vous faisiez partie de ce beau chapitre ? » ; billet PNG/PDF complet après validation.
-- QR `AJ:<uuid RSVP>` et numéro `AJ-XXXXXXXX` conservés. Il s’agit d’une référence, pas d’un contrôle d’entrée.
-- Souvenirs Messages et Images en fin de page. Messages affichés comme texte ; albums publics seulement après date et autorisation.
-- Espace photographe intégré : connexion e-mail/mot de passe Supabase, albums, imports multiples directs signés, modération et publication.
-- Photos privées signées pour 10 minutes, renouvelées pendant la consultation. Les anciennes URLs restent valables jusqu’à expiration après une dépublication.
+**Blocage restant :** les tables et le bucket sont accessibles en lecture, mais les RPC de la migration ne sont pas installées. Les fonctionnalités persistantes renvoient donc `503 schema_required`. Le démarrage est corrigé ; l’activation hébergée requiert encore votre accord. Aucun faux succès ni album d’exemple n’est renvoyé pour masquer cet état.
 
-## Vérifier
+## Vérifier et compiler
 
 ```powershell
-npm run typecheck
-npm test
+npm run verify
 npm run build
-npm run check:secrets
-npm audit --omit=dev
 ```
 
-Les tests PostgreSQL sont exécutés dans PGlite local, avec le schéma reproduit depuis les CSV et des identités simulées. Ils ne modifient pas le projet hébergé. Les tests historiques du serveur Node sont conservés.
+`verify` exécute diagnostic, TypeScript, lint, tests, build, contrôle des secrets puis vérification HTTP et Supabase réelle en lecture seule. Il s’arrête à la première erreur avec un code non nul. Il échoue actuellement à la dernière étape uniquement parce que les RPC manquent ; la preuve est dans `docs/audit/local-runtime.json`.
 
-## Ancien backend conservé
+Le rapport structuré A–F, la liste des changements, les résultats et la checklist figurent dans **`docs/DIAGNOSTIC-VALIDATION.md`**.
 
-`npm run dev:legacy` et `npm start` continuent d’exécuter le backend Node historique. Celui-ci reste indépendant des API Supabase et conserve `.wedding-data` et `.env.wedding.local` intacts. Il n’est pas destiné à Vercel. La connexion photographe de l’interface actuelle utilise Supabase et n’est pas compatible avec son ancien cookie ; utiliser la nouvelle API pour administrer les photos.
+## Vercel et différences locales
 
-## Mise en ligne par le propriétaire
+Le mode optionnel `npm run dev:vercel` est corrigé et a passé les contrôles HTTP. Il utilise l’entrée JavaScript livrée avec le CLI installé sous Windows, retire les drapeaux natifs incompatibles et transmet le chemin absolu de Node. Vite doit écouter le port fourni par Vercel, qui peut être 3000 ; forcer 5174 ne respecte pas ce contrat.
 
-Ne lancer aucune commande de déploiement avant activation SQL autorisée et validation des parcours réels. La procédure, les variables par environnement et la checklist figurent dans `docs/RAPPORT-FINAL.md`. Aucun secret réel n’est inclus dans les fichiers versionnés.
+Le mode `npm run dev` utilise les API publiques de Node et Vite et n’a pas besoin du cache des builders Vercel. Il partage le gateway, la validation, les contrôles d’authentification et les appels Supabase avec la production. Il ne reproduit pas la sandbox, les limites de durée, l’ordonnanceur ou les en-têtes de l’infrastructure Vercel ; le routage gateway est également testé en HTTP. Les photos sont toujours envoyées directement vers le Storage privé via une autorisation signée.
+
+L’ancien backend reste conservé, ainsi que ses données et sa configuration privées. `npm start` / `npm run dev:legacy` correspondent à ce backend historique indépendant, pas au runtime recommandé.
+
+## Activation proposée, non exécutée
+
+`supabase/activation/activate-serverless.sql` regroupe 001 et 002 dans une seule transaction. Il ajoute les RPC et la coordination, ajuste les droits métier et préserve les tables/albums et leurs identifiants. La proposition Storage 003 est facultative et exclue de ce fichier. Aucun SQL hébergé n’est exécuté automatiquement par les commandes de démarrage ou vérification.
+
+Aucun push GitHub et aucun déploiement Vercel n’ont été effectués.

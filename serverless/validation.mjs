@@ -4,7 +4,7 @@ export const PHOTO_TYPES=new Set(['image/jpeg','image/png','image/webp']);
 export function string(value, max, {required=false,field='champ',multiline=false}={}) {
   if(typeof value!=='string'||value.length>max)throw new ApiError(400,'invalid_input',`Vérifiez le champ ${field}.`);
   const result=value.normalize('NFC').trim().replace(/\r\n?/g,'\n');
-  if((required&&!result)||/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(result)||(!multiline&&result.includes('\n')))throw new ApiError(400,'invalid_input',`Vérifiez le champ ${field}.`);
+  if((required&&!result)||[...result].some(c=>{const code=c.charCodeAt(0);return (code<32&&![9,10,13].includes(code))||code===127;})||(!multiline&&result.includes('\n')))throw new ApiError(400,'invalid_input',`Vérifiez le champ ${field}.`);
   return result;
 }
 export function uuid(value,field='identifiant') {if(typeof value!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))throw new ApiError(400,'invalid_id',`Vérifiez le champ ${field}.`);return value.toLowerCase();}
@@ -24,7 +24,7 @@ export function uploadInput(body){
  const filename=string(body.filename,200,{required:true,field:'nom de fichier'});
  if(!Number.isSafeInteger(body.size)||body.size<1||body.size>MAX_PHOTO_BYTES)throw new ApiError(413,'photo_too_large','Chaque photographie doit peser au maximum 20 Mo.');
  if(!PHOTO_TYPES.has(body.content_type))throw new ApiError(415,'unsupported_photo','Choisissez un fichier JPEG, PNG ou WebP.');
- if(!/\.(jpe?g|png|webp)$/i.test(filename)||/[\/\\]/.test(filename))throw new ApiError(400,'invalid_filename','Choisissez un nom de photographie sans chemin de dossier.');
+ if(!/\.(jpe?g|png|webp)$/i.test(filename)||(filename.includes('/')||filename.includes('\\')))throw new ApiError(400,'invalid_filename','Choisissez un nom de photographie sans chemin de dossier.');
  return{album_id:uuid(body.album_id,'album'),client_ref:uuid(body.client_ref,'référence de téléversement'),filename,content_type:body.content_type,size:body.size};
 }
 export function albumPatch(body){rejectUnknown(body,['title','published','hidden']);const patch={};if(body.title!==undefined)patch.title=string(body.title,120,{required:true,field:'titre'});if(body.published!==undefined)patch.published=bool(body.published,'publication');if(body.hidden!==undefined)patch.hidden=bool(body.hidden,'archivage');if(!Object.keys(patch).length)throw new ApiError(400,'empty_patch','Aucune modification demandée.');return patch;}

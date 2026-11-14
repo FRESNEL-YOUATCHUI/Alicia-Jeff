@@ -12,7 +12,7 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
  const {pg,sql}=await database(),client=clientFor(pg),repo=new Repository(client);
  const objects=new Map();
  const storage={
-  async sign(rows){return rows.map(({storage_path,...p})=>({...p,url:'https://storage.invalid/signed/'+p.id,expires_at:new Date(Date.now()+600000).toISOString()}));},
+  async sign(rows){return rows.map(({storage_path:_storagePath,...p})=>({...p,url:'https://storage.invalid/signed/'+p.id,expires_at:new Date(Date.now()+600000).toISOString()}));},
   async uploadToken(u){return{bucket:'wedding-photos',path:u.storage_path,token:'test-only'};},
   async verify(u){const object=objects.get(u.id);if(!object)throw new ApiError(409,'upload_incomplete','Incomplete');if(object==='bad')throw new ApiError(415,'invalid_photo','Invalid');},
   async remove(paths){for(const [key,value]of objects)if(paths.includes(value?.path))objects.delete(key);}

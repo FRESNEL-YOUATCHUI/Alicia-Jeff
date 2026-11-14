@@ -1,0 +1,29 @@
+{
+  "node_version": "22.16.0",
+  "node_executable_exists": true,
+  "required_variables": {
+    "VITE_SUPABASE_URL": true,
+    "VITE_SUPABASE_PUBLISHABLE_KEY": true,
+    "SUPABASE_URL": true,
+    "SUPABASE_SECRET_KEY": true
+  },
+  "url_pair_matches": true,
+  "node_detection": {
+    "single_node_without_flag": {
+      "exit": 0,
+      "found": true,
+      "isCurrentNode": true
+    },
+    "single_node_with_legacy_zero_flag": {
+      "exit": 1,
+      "found": false,
+      "error": "Could not find the Node.js executable in PATH."
+    },
+    "corrected": {
+      "exit": 0,
+      "found": true,
+      "isCurrentNode": true
+    }
+  },
+  "details": "No PATH, secret values or credentials recorded. Legacy zero-flag failure is reproduced in an isolated child PATH."
+}

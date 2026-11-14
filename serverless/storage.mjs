@@ -56,7 +56,7 @@ export class PhotoStorage {
     await this.privateBucket();
     const {data,error}=await this.bucket.createSignedUrls(rows.map(p=>p.storage_path),SIGNED_TTL,download?{download:true}:undefined);
     if(error||!data||data.some(p=>p.error||!p.signedUrl))throw new ApiError(503,'storage_unavailable','Les photographies sont momentanément indisponibles.');
-    return rows.map((p,i)=>{const {storage_path,...safe}=p;return{...safe,url:data[i].signedUrl,expires_at:new Date(Date.now()+SIGNED_TTL*1000).toISOString()};});
+    return rows.map((p,i)=>{const {storage_path:_storagePath,...safe}=p;return{...safe,url:data[i].signedUrl,expires_at:new Date(Date.now()+SIGNED_TTL*1000).toISOString()};});
   }
   async verify(intent){
     await this.privateBucket();

@@ -15,7 +15,7 @@ export async function ticketImage(ticket:Ticket):Promise<string> {
   c.fillStyle='#393e34';
   const maxWidth=1320;let font=44;c.font=`${font}px Georgia`;
   while(c.measureText(ticket.guest_full_name).width>maxWidth && font>25){font--;c.font=`${font}px Georgia`;}
-  const words=ticket.guest_full_name.split(/\s+/);let line='',lines:string[]=[];
+  const words=ticket.guest_full_name.split(/\s+/);let line='';const lines:string[]=[];
   for(const word of words){if(line && c.measureText(line+' '+word).width>maxWidth){lines.push(line);line=word;}else line+=(line?' ':'')+word;}
   if(line)lines.push(line);
   // One exceptionally long word is scaled to the available width rather than cut.

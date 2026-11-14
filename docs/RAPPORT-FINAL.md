@@ -1,5 +1,7 @@
 # Finalisation locale — Alicia & Jeff
 
+**Mise à jour du démarrage et des contrôles : consulter `DIAGNOSTIC-VALIDATION.md` (rapport A–F du 14 novembre 2026). Les anciennes commandes/métriques ci-dessous décrivent la livraison précédente. Le démarrage courant est `npm run dev` sur le port 3000.**
+
 Dossier : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`
 Branche : `codex/supabase-vercel-finalisation`
 État : code préparé et vérifié localement ; activation SQL et validation complète hébergée encore soumises à autorisation. **Aucun push, aucun déploiement, aucune migration ou modification de permission hébergée.**

@@ -1,0 +1,28 @@
+{
+  "checked_on": "2026-11-14",
+  "mode": "CUA browser, actual npm run dev with real Supabase configuration",
+  "frontend": {
+    "envelope_opened": true,
+    "single_page": true,
+    "navigation_history_section_top": 89.875,
+    "images_loaded": 3,
+    "audio_playing": true
+  },
+  "viewport_checks": [
+    {
+      "width": 1440,
+      "document_width": 1425
+    },
+    {
+      "width": 390,
+      "document_width": 375
+    }
+  ],
+  "photographer_form_rendered": true,
+  "captured_console_errors_or_warnings": 0,
+  "limitations": [
+    "The public memories panel displays schema_required because hosted RPCs are not activated.",
+    "No real photographer sign-in/out, admin state read with a valid token, valid RSVP/message or photo upload was performed.",
+    "No hosted mutation or deployment. The browser tab was closed and viewport override reset."
+  ]
+}

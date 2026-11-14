@@ -1,0 +1,161 @@
+{
+  "checked_at": "2026-11-14T00:07:49.976Z",
+  "mode": "real production gateway + Vite middleware, actual configured Supabase",
+  "read_only": true,
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "type": "text/html",
+      "passed": true
+    },
+    {
+      "path": "/api/health",
+      "status": 200,
+      "type": "application/json; charset=utf-8",
+      "passed": true
+    },
+    {
+      "path": "/api/admin/state",
+      "status": 401,
+      "type": "application/json; charset=utf-8",
+      "code": "authentication_required",
+      "passed": true
+    },
+    {
+      "path": "/api/gateway?__wedding_route=admin/state",
+      "status": 401,
+      "type": "application/json; charset=utf-8",
+      "code": "authentication_required",
+      "passed": true
+    },
+    {
+      "path": "/api/admin/state",
+      "status": 401,
+      "type": "application/json; charset=utf-8",
+      "code": "invalid_token",
+      "passed": true
+    },
+    {
+      "path": "/api/not-found",
+      "status": 404,
+      "type": "application/json; charset=utf-8",
+      "code": "not_found",
+      "passed": true
+    },
+    {
+      "path": "/api/rsvp",
+      "status": 400,
+      "type": "application/json; charset=utf-8",
+      "code": "invalid_participants",
+      "passed": true
+    },
+    {
+      "path": "/api/messages",
+      "status": 400,
+      "type": "application/json; charset=utf-8",
+      "code": "invalid_input",
+      "passed": true
+    },
+    {
+      "path": "/src/main.tsx",
+      "status": 200,
+      "type": "text/javascript",
+      "passed": true
+    },
+    {
+      "path": "/wedding/jeff-decor.webp",
+      "status": 200,
+      "type": "image/webp",
+      "passed": true
+    },
+    {
+      "path": "/wedding/music.mp4",
+      "status": 200,
+      "type": "video/mp4",
+      "passed": true
+    },
+    {
+      "path": "/.env.local",
+      "status": 404,
+      "type": "application/json",
+      "code": "not_found",
+      "passed": true
+    },
+    {
+      "path": "/.wedding-data/souvenirs.json",
+      "status": 404,
+      "type": "application/json",
+      "code": "not_found",
+      "passed": true
+    },
+    {
+      "path": "/serverless/supabase.mjs",
+      "status": 404,
+      "type": "application/json",
+      "code": "not_found",
+      "passed": true
+    },
+    {
+      "path": "/docs/database/storage_grants.csv",
+      "status": 404,
+      "type": "application/json",
+      "code": "not_found",
+      "passed": true
+    }
+  ],
+  "readiness": {
+    "status": 503,
+    "code": "schema_required",
+    "ready": false
+  },
+  "compatibility": {
+    "checked_at": "2026-11-14T00:07:49.862Z",
+    "read_only": true,
+    "no_visitor_rows_requested": true,
+    "tables": [
+      {
+        "table": "wedding_albums",
+        "columns_checked": 5,
+        "read_only_limit": 0,
+        "compatible": true
+      },
+      {
+        "table": "wedding_photos",
+        "columns_checked": 6,
+        "read_only_limit": 0,
+        "compatible": true
+      },
+      {
+        "table": "wedding_settings",
+        "columns_checked": 3,
+        "read_only_limit": 0,
+        "compatible": true
+      },
+      {
+        "table": "wedding_staff",
+        "columns_checked": 2,
+        "read_only_limit": 0,
+        "compatible": true
+      },
+      {
+        "table": "wedding_rsvps",
+        "columns_checked": 8,
+        "read_only_limit": 0,
+        "compatible": true
+      },
+      {
+        "table": "wedding_messages",
+        "columns_checked": 7,
+        "read_only_limit": 0,
+        "compatible": true
+      }
+    ],
+    "bucket": {
+      "available": true,
+      "private": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    }
+  }
+}

@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import {createClient} from '@supabase/supabase-js';
 process.loadEnvFile('.env.local');
 const client=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});

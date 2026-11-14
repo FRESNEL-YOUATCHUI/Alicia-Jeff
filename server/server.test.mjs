@@ -68,6 +68,6 @@ try{
  });
 }finally{
  await new Promise(resolve=>server.close(resolve));
- const relative=path.relative(base,directory);if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw new Error('Refus de supprimer un dossier en dehors des tests.');
+ const relative=path.relative(base,directory);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative),'Refus de supprimer un dossier en dehors des tests.');
  await fs.rm(directory,{recursive:true,force:true});
 }

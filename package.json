@@ -17,7 +17,10 @@
     "test:experience": "node scripts/test-experience.mjs",
     "test": "npm run test:server && npm run test:api && npm run test:experience",
     "check:secrets": "node scripts/check-frontend-secrets.mjs",
-    "inspect:supabase": "node scripts/inspect-supabase.mjs"
+    "inspect:supabase": "node scripts/inspect-supabase.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:runtime": "node scripts/verify-runtime.mjs",
+    "diagnose": "node scripts/diagnose-runtime.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -48,5 +51,8 @@
   },
   "overrides": {
     "tar": "^7.5.23"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

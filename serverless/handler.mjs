@@ -1,7 +1,7 @@
 import {timingSafeEqual} from 'node:crypto';
 import {ApiError,checkOrigin,readJson,requireMethod,routeFromRequest,sendError,sendJson} from './http.mjs';
 import {albumPatch,bool,messageInput,offset,rejectUnknown,rsvpInput,string,uploadInput,uuid} from './validation.mjs';
-import {getSupabase,requireStaff,serverConfig} from './supabase.mjs';
+import {getSupabase,requireStaff,serverConfig,bearerToken} from './supabase.mjs';
 import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
 const ok={ok:true};
@@ -19,6 +19,8 @@ export function createHandler(dependencies){
         const expected=Buffer.from('Bearer '+secret),provided=Buffer.from(String(req.headers.authorization??''));
         if(expected.length!==provided.length||!timingSafeEqual(expected,provided))throw new ApiError(401,'authentication_required','Accès non autorisé.');
       }
+      // Missing authentication is always 401, even before server configuration is available.
+      if(route.startsWith('/api/admin/'))bearerToken(req);
       const deps=dependencies??(()=>{const client=getSupabase();return{repo:new Repository(client),storage:new PhotoStorage(client),authenticate:r=>requireStaff(r,client),rateSecret:serverConfig().key};})();
       const {repo,storage}=deps;
       if(!['GET','HEAD'].includes(req.method))checkOrigin(req);

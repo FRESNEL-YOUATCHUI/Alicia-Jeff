@@ -1,0 +1,27 @@
+{
+  "captured_at": "2026-11-14T10:36:30.153Z",
+  "checked_at": "2026-11-14T10:47:36.829Z",
+  "read_only": true,
+  "consistent_snapshot": false,
+  "verified_readback": true,
+  "private_file": ".qa-artifacts/backups/business-readonly-1794652590171.json",
+  "sha256": "f2526429ac65dbfe95b09dbca4c9b3942bdda3520b088d297edf7933302263ff",
+  "counts": {
+    "wedding_albums": 3,
+    "wedding_photos": 0,
+    "wedding_settings": 1,
+    "wedding_staff": 1,
+    "wedding_rsvps": 0,
+    "wedding_messages": 0
+  },
+  "bucket": {
+    "id": "wedding-photos",
+    "public": false,
+    "file_size_limit": null,
+    "allowed_mime_types": null
+  },
+  "sql_backup_still_required": true,
+  "includes_auth_users": false,
+  "includes_storage_bytes": false,
+  "includes_sql_acls": false
+}

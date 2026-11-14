@@ -14,7 +14,7 @@ export async function startLocalApp({port=3000,host='127.0.0.1',logger=console}=
       res.writeHead(400,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Adresse non valide.',code:'invalid_path'}));return;
     }
     const segments=pathname.toLowerCase().split('/');
-    if(segments.some(part=>part.startsWith('.env')||['.git','.vercel','.wedding-data'].includes(part))||['server','serverless','scripts','supabase','docs'].includes(segments[1])){
+    if(segments.some(part=>part.startsWith('.env')||['.git','.vercel','.wedding-data','.qa-artifacts'].includes(part))||['server','serverless','scripts','supabase','docs'].includes(segments[1])){
       res.writeHead(404,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({error:'Adresse introuvable.',code:'not_found'}));return;
     }
     if(pathname==='/api'||pathname.startsWith('/api/')){

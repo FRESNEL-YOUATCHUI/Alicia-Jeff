@@ -20,7 +20,10 @@
     "inspect:supabase": "node scripts/inspect-supabase.mjs",
     "verify": "node scripts/verify.mjs",
     "verify:runtime": "node scripts/verify-runtime.mjs",
-    "diagnose": "node scripts/diagnose-runtime.mjs"
+    "diagnose": "node scripts/diagnose-runtime.mjs",
+    "audit:activation": "node --test tests/activation*.test.mjs",
+    "backup:business": "node scripts/backup-business-readonly.mjs",
+    "prepare:rollback": "node scripts/prepare-activation-rollback.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

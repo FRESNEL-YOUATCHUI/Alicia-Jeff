@@ -144,3 +144,33 @@ Liste exhaustive de cette intervention depuis 4d51634. .gitignore préexistant e
 | `tests/runtime.test.mjs` | créé |
 | `vite.config.ts` | modifié |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Audit préalable SQL et rollback — 14 novembre 2026
+
+Fichiers locaux de cette intervention depuis db51f84. Aucune sauvegarde personnelle, clé ou modification préexistante de .gitignore incluse. Les corrections et réserves sont détaillées dans AUDIT-ACTIVATION-SUPABASE.md.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | modifié |
+| `docs/AUDIT-ACTIVATION-SUPABASE.md` | créé |
+| `docs/DIAGNOSTIC-VALIDATION.md` | modifié |
+| `docs/audit/activation-backup.json` | créé |
+| `docs/audit/activation-security.json` | créé |
+| `docs/audit/local-runtime.json` | modifié |
+| `docs/audit/readonly-health.json` | modifié |
+| `package.json` | modifié |
+| `scripts/backup-business-readonly.mjs` | créé |
+| `scripts/lib/activation-manifest.mjs` | créé |
+| `scripts/lib/local-app.mjs` | modifié |
+| `scripts/prepare-activation-backup.mjs` | créé |
+| `scripts/prepare-activation-rollback.mjs` | créé |
+| `scripts/prepare-supabase-activation.mjs` | modifié |
+| `scripts/verify-runtime.mjs` | modifié |
+| `supabase/activation/activate-serverless.sql` | modifié |
+| `supabase/activation/preflight-backup-readonly.sql` | créé |
+| `supabase/activation/rollback-serverless.sql` | créé |
+| `supabase/migrations/001_serverless.sql` | modifié |
+| `supabase/migrations/002_api_only_access.sql` | modifié |
+| `tests/activation-audit.test.mjs` | créé |
+| `vite.config.ts` | modifié |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

@@ -40,3 +40,9 @@ L’ancien backend reste conservé, ainsi que ses données et sa configuration p
 `supabase/activation/activate-serverless.sql` regroupe 001 et 002 dans une seule transaction. Il ajoute les RPC et la coordination, ajuste les droits métier et préserve les tables/albums et leurs identifiants. La proposition Storage 003 est facultative et exclue de ce fichier. Aucun SQL hébergé n’est exécuté automatiquement par les commandes de démarrage ou vérification.
 
 Aucun push GitHub et aucun déploiement Vercel n’ont été effectués.
+
+## Audit préalable à l’activation Supabase
+
+L’audit SQL complémentaire et ses réserves sont dans [docs/AUDIT-ACTIVATION-SUPABASE.md](docs/AUDIT-ACTIVATION-SUPABASE.md). Aucun SQL d’activation n’a été exécuté sur le serveur hébergé. Une archive REST privée supplémentaire est conservée dans `.qa-artifacts/backups/` ; elle ne remplace pas la capture SQL transactionnelle/ACL nécessaire au rollback réel.
+
+`npm run audit:activation` exécute uniquement les tests PostgreSQL isolés. Le fichier `supabase/activation/rollback-serverless.sql` est un garde-fou : le vrai rollback doit être généré à partir de l’instantané complet avec `npm run prepare:rollback -- <snapshot.json>`, puis revu avant toute exécution autorisée.

@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-14T00:07:49.976Z",
+  "checked_at": "2026-11-14T10:43:01.780Z",
   "mode": "real production gateway + Vite middleware, actual configured Supabase",
   "read_only": true,
   "checks": [
@@ -90,6 +90,13 @@
       "passed": true
     },
     {
+      "path": "/.qa-artifacts/backups/private.json",
+      "status": 404,
+      "type": "application/json",
+      "code": "not_found",
+      "passed": true
+    },
+    {
       "path": "/serverless/supabase.mjs",
       "status": 404,
       "type": "application/json",
@@ -110,7 +117,7 @@
     "ready": false
   },
   "compatibility": {
-    "checked_at": "2026-11-14T00:07:49.862Z",
+    "checked_at": "2026-11-14T10:42:59.785Z",
     "read_only": true,
     "no_visitor_rows_requested": true,
     "tables": [

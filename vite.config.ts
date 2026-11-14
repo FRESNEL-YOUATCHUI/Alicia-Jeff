@@ -8,7 +8,7 @@ export default defineConfig(({command})=>({
  // vercel dev owns /api. A proxy is enabled only by the standalone local scripts.
  server:{
   ...(process.env.WEDDING_DEV_API?{proxy:{'/api':{target:process.env.WEDDING_DEV_API,changeOrigin:true}}}:{}),
-  fs:{deny:['**/.env*','**/*.{crt,pem}','**/.git/**','**/.vercel/**','**/.wedding-data/**','**/docs/**','**/supabase/**','**/server/**','**/serverless/**','**/scripts/**']}
+  fs:{deny:['**/.env*','**/*.{crt,pem}','**/.git/**','**/.vercel/**','**/.wedding-data/**','**/.qa-artifacts/**','**/docs/**','**/supabase/**','**/server/**','**/serverless/**','**/scripts/**']}
  },
  optimizeDeps:{exclude:['lucide-react']}
 }));

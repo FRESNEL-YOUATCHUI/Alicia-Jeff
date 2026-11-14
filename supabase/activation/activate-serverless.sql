@@ -2,7 +2,11 @@
 -- Atomic activation of 001 + 002. No Storage policies/configuration or existing business rows are changed.
 -- The optional Storage hardening 003 is deliberately excluded.
 begin;
--- Source: 001_serverless.sql | SHA256 39727ea24c62d18abc663f5c99eacba5ad7e38600fc026bd5ddd4afa900b8fa2
+set local lock_timeout='5s';
+set local statement_timeout='120s';
+select pg_advisory_xact_lock(7812471901126);
+lock table public.wedding_albums,public.wedding_photos,public.wedding_settings,public.wedding_staff,public.wedding_rsvps,public.wedding_messages in share row exclusive mode;
+-- Source: 001_serverless.sql | SHA256 4b8c3e190b18e36015df807d53c3ad3707139f8658bf382e59b2cfcb299c4c87
 -- Prepared from the three owner-supplied CSV exports and read-only OpenAPI metadata.
 -- Local migration only: execution on hosted Supabase still requires explicit approval.
 -- No base table, album, Auth account or business record is recreated.
@@ -30,6 +34,48 @@ begin
   end if;
 end $preflight$;
 
+
+-- Revalidate constraints and server trust boundaries; exported CSVs may be stale.
+do $dependencies$
+declare expected record;r text;
+begin
+ for expected in select * from (values
+ ('wedding_albums','wedding_albums_pkey','PRIMARY KEY (id)'),
+ ('wedding_photos','wedding_photos_album_id_fkey','FOREIGN KEY (album_id) REFERENCES wedding_albums(id) ON DELETE CASCADE'),
+ ('wedding_photos','wedding_photos_pkey','PRIMARY KEY (id)'),
+ ('wedding_photos','wedding_photos_storage_path_key','UNIQUE (storage_path)'),
+ ('wedding_settings','wedding_settings_id_check','CHECK ((id = 1))'),
+ ('wedding_settings','wedding_settings_pkey','PRIMARY KEY (id)'),
+ ('wedding_staff','wedding_staff_pkey','PRIMARY KEY (user_id)'),
+ ('wedding_staff','wedding_staff_role_check','CHECK ((role = ANY (ARRAY[''photographer''::text, ''admin''::text])))'),
+ ('wedding_staff','wedding_staff_user_id_fkey','FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE'),
+ ('wedding_rsvps','wedding_rsvps_first_name_check','CHECK ((length(TRIM(BOTH FROM first_name)) > 0))'),
+ ('wedding_rsvps','wedding_rsvps_last_name_check','CHECK ((length(TRIM(BOTH FROM last_name)) > 0))'),
+ ('wedding_rsvps','wedding_rsvps_participants_check','CHECK (((participants >= 1) AND (participants <= 20)))'),
+ ('wedding_rsvps','wedding_rsvps_pkey','PRIMARY KEY (id)'),
+ ('wedding_rsvps','wedding_rsvps_ref_hash_key','UNIQUE (ref_hash)'),
+ ('wedding_messages','wedding_messages_author_check','CHECK ((length(TRIM(BOTH FROM author)) > 0))'),
+ ('wedding_messages','wedding_messages_body_check','CHECK ((length(TRIM(BOTH FROM body)) > 0))'),
+ ('wedding_messages','wedding_messages_pkey','PRIMARY KEY (id)'),
+ ('wedding_messages','wedding_messages_ref_hash_key','UNIQUE (ref_hash)'),
+ ('wedding_messages','wedding_messages_response_id_fkey','FOREIGN KEY (response_id) REFERENCES wedding_rsvps(id) ON DELETE SET NULL'),
+ ('wedding_messages','wedding_messages_response_id_key','UNIQUE (response_id)')
+ ) as required(tab,name,definition) loop
+ if not exists(select 1 from pg_constraint c where c.conrelid=to_regclass('public.'||expected.tab) and c.conname=expected.name and c.convalidated and pg_get_constraintdef(c.oid)=expected.definition) then
+ raise exception 'Constraint changed or missing: %.%. Stop and re-audit.',expected.tab,expected.name;end if;
+ end loop;
+ for expected in select * from (values
+ ('wedding_albums','title',120),('wedding_photos','caption',200),('wedding_rsvps','ref_hash',64),('wedding_rsvps','first_name',80),('wedding_rsvps','last_name',80),('wedding_rsvps','song',200),('wedding_messages','ref_hash',64),('wedding_messages','author',80),('wedding_messages','body',2000)
+ ) as limits(tab,col,n) loop
+ if not exists(select 1 from information_schema.columns where table_schema='public' and table_name=expected.tab and column_name=expected.col and (character_maximum_length is null or character_maximum_length>=expected.n)) then raise exception 'Column length incompatible with API';end if;
+ end loop;
+ if not exists(select 1 from pg_roles where rolname='service_role' and rolbypassrls) then raise exception 'Expected privileged server role unavailable';end if;
+ foreach r in array array['anon','authenticated'] loop
+ if not exists(select 1 from pg_roles where rolname=r and not rolsuper and not rolbypassrls and not rolcreaterole and not rolcreatedb) or has_schema_privilege(r,'public','CREATE') then raise exception 'Untrusted browser role or public schema CREATE privilege';end if;
+ if exists(select 1 from pg_roles privileged where (privileged.rolsuper or privileged.rolbypassrls or privileged.oid in(select c.relowner from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('wedding_albums','wedding_photos','wedding_settings','wedding_staff','wedding_rsvps','wedding_messages'))) and pg_has_role((select oid from pg_roles where rolname=r),privileged.oid,'MEMBER')) then raise exception 'Browser membership in a privileged/owner role detected';end if;
+ end loop;
+end $dependencies$;
+
 -- Supplemental durable coordination only. No base table/albums recreated or seeded.
 create table if not exists public.wedding_api_limits(
   key text primary key,window_start timestamptz not null,hits integer not null
@@ -53,7 +99,7 @@ create index if not exists wedding_api_photo_album_order on public.wedding_photo
 create index if not exists wedding_api_message_order on public.wedding_messages(created_at desc,id desc);
 
 create or replace function public.wedding_api_assert_staff(p_staff uuid)
-returns void language plpgsql set search_path=pg_catalog,public as $$
+returns void language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  if not exists(select 1 from public.wedding_staff where user_id=p_staff and role in ('admin','photographer')) then
    raise exception using errcode='AJ404',message='Staff unavailable';
@@ -61,7 +107,7 @@ begin
 end $$;
 
 create or replace function public.wedding_api_rate(p_key text,p_limit integer,p_seconds integer)
-returns boolean language plpgsql set search_path=pg_catalog,public as $$
+returns boolean language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare n integer;
 begin
  if p_limit not between 1 and 1000 or p_seconds not between 1 and 86400 or p_key !~ '^[a-f0-9]{64}$' then raise exception using errcode='AJ400';end if;
@@ -77,7 +123,7 @@ begin
 end $$;
 
 create or replace function public.wedding_api_rsvp(p_input jsonb)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare r public.wedding_rsvps; m public.wedding_messages;
  first_n text:=p_input->>'first_name';last_n text:=p_input->>'last_name';n integer:=(p_input->>'participants')::integer;
 begin
@@ -108,7 +154,7 @@ begin
 end $$;
 
 create or replace function public.wedding_api_message(p_input jsonb)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare m public.wedding_messages;
 begin
  if p_input->>'author' is null or p_input->>'body' is null or p_input->>'ref_hash' is null
@@ -121,18 +167,18 @@ begin
 end $$;
 
 create or replace function public.wedding_api_messages(p_offset integer default 0)
-returns jsonb language sql stable set search_path=pg_catalog,public as $$
+returns jsonb language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select jsonb_build_object('messages',coalesce((select jsonb_agg(to_jsonb(m)) from
  (select id,author,body,created_at from public.wedding_messages where not hidden order by created_at desc,id desc limit 50 offset greatest(p_offset,0)) m),'[]'::jsonb),
  'has_more',(select count(*)>greatest(p_offset,0)+50 from public.wedding_messages where not hidden))
 $$;
 
 create or replace function public.wedding_api_gallery_open()
-returns boolean language sql stable set search_path=pg_catalog,public as $$
+returns boolean language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select coalesce((select gallery_published and release_at is not null and now()>=release_at from public.wedding_settings where id=1),false)
 $$;
 create or replace function public.wedding_api_public_state()
-returns jsonb language sql stable set search_path=pg_catalog,public as $$
+returns jsonb language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select jsonb_build_object(
  'messages',public.wedding_api_messages(0)->'messages',
  'message_count',(select count(*) from public.wedding_messages where not hidden),
@@ -146,7 +192,7 @@ returns jsonb language sql stable set search_path=pg_catalog,public as $$
  ) a),'[]'::jsonb) else '[]'::jsonb end)
 $$;
 create or replace function public.wedding_api_public_photos(p_album uuid,p_offset integer default 0)
-returns jsonb language plpgsql stable set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql stable security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  if not public.wedding_api_gallery_open() or not exists(select 1 from public.wedding_albums where id=p_album and published and not hidden) then raise exception using errcode='AJ404';end if;
  return jsonb_build_object('photos',coalesce((select jsonb_agg(to_jsonb(p)) from (
@@ -154,14 +200,14 @@ begin
  'has_more',(select count(*)>greatest(p_offset,0)+60 from public.wedding_photos where album_id=p_album and not hidden));
 end $$;
 create or replace function public.wedding_api_public_photo(p_id uuid)
-returns jsonb language sql stable set search_path=pg_catalog,public as $$
+returns jsonb language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select jsonb_build_object('id',p.id,'caption',p.caption,'storage_path',p.storage_path) from public.wedding_photos p
  join public.wedding_albums a on a.id=p.album_id
  where p.id=p_id and not p.hidden and a.published and not a.hidden and public.wedding_api_gallery_open()
 $$;
 
 create or replace function public.wedding_api_admin_photos(p_album uuid,p_offset integer default 0)
-returns jsonb language plpgsql stable set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql stable security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  if not exists(select 1 from public.wedding_albums where id=p_album) then raise exception using errcode='AJ404';end if;
  return jsonb_build_object('photos',coalesce((select jsonb_agg(to_jsonb(p)) from (
@@ -169,13 +215,13 @@ begin
  'has_more',(select count(*)>greatest(p_offset,0)+60 from public.wedding_photos where album_id=p_album));
 end $$;
 create or replace function public.wedding_api_admin_messages(p_offset integer default 0)
-returns jsonb language sql stable set search_path=pg_catalog,public as $$
+returns jsonb language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select jsonb_build_object('messages',coalesce((select jsonb_agg(to_jsonb(m)) from
  (select id,author,body,hidden,created_at from public.wedding_messages order by created_at desc,id desc limit 50 offset greatest(p_offset,0)) m),'[]'::jsonb),
  'has_more',(select count(*)>greatest(p_offset,0)+50 from public.wedding_messages))
 $$;
 create or replace function public.wedding_api_admin_state()
-returns jsonb language sql stable set search_path=pg_catalog,public as $$
+returns jsonb language sql stable security invoker set search_path=pg_catalog,pg_temp as $$
  select jsonb_build_object(
  'albums',coalesce((select jsonb_agg(jsonb_build_object('id',a.id,'title',a.title,'hidden',a.hidden,'published',a.published)
  ||public.wedding_api_admin_photos(a.id,0)) from public.wedding_albums a),'[]'::jsonb),
@@ -185,7 +231,7 @@ returns jsonb language sql stable set search_path=pg_catalog,public as $$
 $$;
 
 create or replace function public.wedding_api_mutate(p_kind text,p_id uuid,p_patch jsonb,p_staff uuid)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare result jsonb;
 begin
  perform public.wedding_api_assert_staff(p_staff);
@@ -206,7 +252,7 @@ begin
 end $$;
 
 create or replace function public.wedding_api_upload_reserve(p_input jsonb,p_staff uuid)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare u public.wedding_api_uploads; album uuid:=(p_input->>'album_id')::uuid; uid uuid:=gen_random_uuid();ext text;
 begin
  perform public.wedding_api_assert_staff(p_staff);
@@ -230,7 +276,7 @@ begin
  return to_jsonb(u);
 end $$;
 create or replace function public.wedding_api_upload_claim(p_id uuid,p_staff uuid)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare u public.wedding_api_uploads;
 begin
  perform public.wedding_api_assert_staff(p_staff);
@@ -244,14 +290,14 @@ begin
  return to_jsonb(u);
 end $$;
 create or replace function public.wedding_api_upload_release(p_id uuid,p_nonce uuid,p_staff uuid)
-returns boolean language plpgsql set search_path=pg_catalog,public as $$
+returns boolean language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  perform public.wedding_api_assert_staff(p_staff);
  update public.wedding_api_uploads set status='pending',nonce=null,lease_until=null where id=p_id and staff_id=p_staff and status='validating' and nonce=p_nonce;
  return true;
 end $$;
 create or replace function public.wedding_api_upload_complete(p_id uuid,p_nonce uuid,p_staff uuid)
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare u public.wedding_api_uploads;
 begin
  perform public.wedding_api_assert_staff(p_staff);
@@ -269,7 +315,7 @@ begin
  return jsonb_build_object('ok',true,'photo_id',u.id);
 end $$;
 create or replace function public.wedding_api_upload_cancel(p_id uuid,p_staff uuid)
-returns boolean language plpgsql set search_path=pg_catalog,public as $$
+returns boolean language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  perform public.wedding_api_assert_staff(p_staff);
  update public.wedding_api_uploads set status='cancelled',nonce=null,lease_until=null where id=p_id and staff_id=p_staff and status in ('pending','validating');
@@ -277,7 +323,7 @@ begin
  return true;
 end $$;
 create or replace function public.wedding_api_cleanup_claim()
-returns jsonb language plpgsql set search_path=pg_catalog,public as $$
+returns jsonb language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 declare result jsonb;
 begin
  -- Leased cleanup is retryable. No valid signed upload token remains at this time.
@@ -292,7 +338,7 @@ begin
  return result;
 end $$;
 create or replace function public.wedding_api_cleanup_done(p_ids uuid[])
-returns boolean language plpgsql set search_path=pg_catalog,public as $$
+returns boolean language plpgsql security invoker set search_path=pg_catalog,pg_temp as $$
 begin
  update public.wedding_api_uploads set status='cleaned',lease_until=null where id=any(p_ids) and status='cleaning';
  return true;
@@ -301,17 +347,47 @@ end $$;
 -- All RPCs are callable ONLY by the privileged server, never by a browser JWT.
 -- SECURITY INVOKER plus service_role privileges: no SECURITY DEFINER escalation.
 do $permissions$
-declare f record;
+declare f record;g record;fn oid;
 begin
- for f in select p.oid::regprocedure as signature from pg_proc p join pg_namespace n on n.oid=p.pronamespace
- where n.nspname='public' and left(p.proname,12)='wedding_api_' loop
- execute format('revoke all on function %s from public,anon,authenticated',f.signature);
- execute format('grant execute on function %s to service_role',f.signature);
+ for f in select signature from (values
+ ('public.wedding_api_assert_staff(uuid)'),
+ ('public.wedding_api_rate(text,integer,integer)'),
+ ('public.wedding_api_rsvp(jsonb)'),
+ ('public.wedding_api_message(jsonb)'),
+ ('public.wedding_api_messages(integer)'),
+ ('public.wedding_api_gallery_open()'),
+ ('public.wedding_api_public_state()'),
+ ('public.wedding_api_public_photos(uuid,integer)'),
+ ('public.wedding_api_public_photo(uuid)'),
+ ('public.wedding_api_admin_photos(uuid,integer)'),
+ ('public.wedding_api_admin_messages(integer)'),
+ ('public.wedding_api_admin_state()'),
+ ('public.wedding_api_mutate(text,uuid,jsonb,uuid)'),
+ ('public.wedding_api_upload_reserve(jsonb,uuid)'),
+ ('public.wedding_api_upload_claim(uuid,uuid)'),
+ ('public.wedding_api_upload_release(uuid,uuid,uuid)'),
+ ('public.wedding_api_upload_complete(uuid,uuid,uuid)'),
+ ('public.wedding_api_upload_cancel(uuid,uuid)'),
+ ('public.wedding_api_cleanup_claim()'),
+ ('public.wedding_api_cleanup_done(uuid[])')
+ ) as expected(signature) loop
+ fn:=to_regprocedure(f.signature);
+ if fn is null then raise exception 'Expected API function missing: %',f.signature;end if;
+ -- Remove default ACL grants too. Unrelated functions/overloads are not changed.
+ for g in select distinct x.grantee from pg_proc p cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x
+ where p.oid=fn and x.grantee<>p.proowner loop
+ execute format('revoke all on function %s from %s',fn::regprocedure,case when g.grantee=0 then 'public' else quote_ident(pg_get_userbyid(g.grantee)) end);
+ end loop;
+ execute format('grant execute on function %s to service_role',fn::regprocedure);
+ if exists(select 1 from pg_proc where oid=fn and (prosecdef or proconfig is distinct from array['search_path=pg_catalog, pg_temp'])) then
+ raise exception 'Unexpected API security configuration: %',f.signature;end if;
+ if has_function_privilege('anon',fn,'execute') or has_function_privilege('authenticated',fn,'execute') then
+ raise exception 'Inherited API execute privilege detected. Stop and audit role memberships.';end if;
  end loop;
 end $permissions$;
 notify pgrst,'reload schema';
 
--- Source: 002_api_only_access.sql | SHA256 37b17bc8ee65e7505579eca6c851c9a05a53caa73385667084ec9bcdde2e6dfc
+-- Source: 002_api_only_access.sql | SHA256 54115df09616e4fda25c1dd1b1b88bb7d1e142c6f1d4d5d1c2d51375b56f9a0a
 -- Prepared from wedding_policies.csv. Execution requires explicit owner approval.
 -- No rows or existing policies are deleted; RLS stays enabled.
 
@@ -341,4 +417,19 @@ begin
  if exists(select 1 from pg_policies where schemaname='public' and tablename='wedding_staff'
  and policyname<>'Staff can read own role') then raise exception 'Unexpected staff policy. Stop and re-audit.';end if;
 end $$;
+-- Refuse effective access inherited through other roles as well.
+do $effective_access$
+declare r text;t text;
+begin
+ foreach r in array array['anon','authenticated'] loop
+ if exists(select 1 from pg_roles where rolname=r and (rolsuper or rolbypassrls)) then raise exception 'Browser role bypasses RLS. Stop and audit.';end if;
+ foreach t in array array['wedding_albums','wedding_photos','wedding_settings','wedding_rsvps','wedding_messages','wedding_staff'] loop
+ if has_table_privilege(r,'public.'||t,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+ or has_any_column_privilege(r,'public.'||t,'INSERT,UPDATE,REFERENCES')
+ or (t<>'wedding_staff' and has_any_column_privilege(r,'public.'||t,'SELECT'))
+ or (t='wedding_staff' and r='anon' and has_any_column_privilege(r,'public.'||t,'SELECT')) then
+ raise exception 'Unexpected inherited business privilege for %.%. Stop and audit.',r,t;end if;
+ end loop;
+ end loop;
+end $effective_access$;
 commit;

@@ -4,6 +4,8 @@ Date de livraison : 14 novembre 2026, UTC. Dossier : `C:\Users\Hp EliteBook\Down
 
 **État : démarrage Windows corrigé et testé, frontend accessible, administration anonyme en 401, aucune erreur de passerelle observée après correction. La validation fonctionnelle hébergée reste bloquée par l’absence des RPC Supabase.** Aucune migration, permission, donnée réelle, clé, configuration de production, opération GitHub ou déploiement n’a été modifié à distance.
 
+> Complément du 14 novembre : voir [AUDIT-ACTIVATION-SUPABASE.md](AUDIT-ACTIVATION-SUPABASE.md) pour l’audit SQL, la sauvegarde supplémentaire, le rollback et ses conditions bloquantes. Le dernier contrôle runtime comporte 16 vérifications HTTP. Aucune activation hébergée autorisée ou exécutée.
+
 ## A. Diagnostic et preuves
 
 ### 1. Détection Node dans Vercel

@@ -19,7 +19,7 @@ try{
     {path:'/src/main.tsx',status:200,type:'javascript'},
     {path:'/wedding/jeff-decor.webp',status:200,type:'image/webp'},
     {path:'/wedding/music.mp4',status:200,type:'video/mp4'},
-    ...['/.env.local','/.wedding-data/souvenirs.json','/serverless/supabase.mjs','/docs/database/storage_grants.csv'].map(path=>({path,status:404})),
+    ...['/.env.local','/.wedding-data/souvenirs.json','/.qa-artifacts/backups/private.json','/serverless/supabase.mjs','/docs/database/storage_grants.csv'].map(path=>({path,status:404})),
   ];
   for(const check of checks){
     const response=await fetch(app.url+check.path,{

@@ -27,4 +27,19 @@ begin
  if exists(select 1 from pg_policies where schemaname='public' and tablename='wedding_staff'
  and policyname<>'Staff can read own role') then raise exception 'Unexpected staff policy. Stop and re-audit.';end if;
 end $$;
+-- Refuse effective access inherited through other roles as well.
+do $effective_access$
+declare r text;t text;
+begin
+ foreach r in array array['anon','authenticated'] loop
+ if exists(select 1 from pg_roles where rolname=r and (rolsuper or rolbypassrls)) then raise exception 'Browser role bypasses RLS. Stop and audit.';end if;
+ foreach t in array array['wedding_albums','wedding_photos','wedding_settings','wedding_rsvps','wedding_messages','wedding_staff'] loop
+ if has_table_privilege(r,'public.'||t,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+ or has_any_column_privilege(r,'public.'||t,'INSERT,UPDATE,REFERENCES')
+ or (t<>'wedding_staff' and has_any_column_privilege(r,'public.'||t,'SELECT'))
+ or (t='wedding_staff' and r='anon' and has_any_column_privilege(r,'public.'||t,'SELECT')) then
+ raise exception 'Unexpected inherited business privilege for %.%. Stop and audit.',r,t;end if;
+ end loop;
+ end loop;
+end $effective_access$;
 commit;

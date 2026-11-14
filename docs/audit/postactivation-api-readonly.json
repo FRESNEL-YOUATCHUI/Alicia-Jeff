@@ -1,0 +1,155 @@
+{
+  "checked_at": "2026-11-14T18:24:53.522Z",
+  "mode": "actual configured Supabase + unchanged production gateway",
+  "agent_hosted_mutations_performed": false,
+  "checks": [
+    {
+      "name": "public souvenirs returns HTTP 200 from real RPC",
+      "passed": true
+    },
+    {
+      "name": "public guest messages returns HTTP 200 without private columns",
+      "passed": true
+    },
+    {
+      "name": "invalid public pagination refused before SQL",
+      "passed": true
+    },
+    {
+      "name": "anonymous administrative state refused with HTTP 401",
+      "passed": true
+    },
+    {
+      "name": "anonymous administrative messages refused with HTTP 401",
+      "passed": true
+    },
+    {
+      "name": "invalid JWT refused by real Supabase Auth",
+      "passed": true
+    },
+    {
+      "name": "no public RSVP listing route",
+      "passed": true
+    },
+    {
+      "name": "invalid RSVP rejected before rate or business mutation",
+      "passed": true
+    },
+    {
+      "name": "invalid guest message rejected before rate or business mutation",
+      "passed": true
+    },
+    {
+      "name": "server-only admin state RPC reads actual albums/settings/counts",
+      "passed": true
+    },
+    {
+      "name": "server-only administrative message RPC read",
+      "passed": true
+    },
+    {
+      "name": "server-only administrative photo RPC read for album 1",
+      "passed": true
+    },
+    {
+      "name": "server-only administrative photo RPC read for album 2",
+      "passed": true
+    },
+    {
+      "name": "server-only administrative photo RPC read for album 3",
+      "passed": true
+    },
+    {
+      "name": "gallery/date gate protects actual album API",
+      "passed": true
+    },
+    {
+      "name": "individual nonpublished/unavailable photo does not expose a URL",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_albums",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_photos",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_settings",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_staff",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_rsvps",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct table read denied: wedding_messages",
+      "passed": true
+    },
+    {
+      "name": "publishable-key direct admin RPC denied",
+      "passed": true
+    },
+    {
+      "name": "staff role references an existing confirmed Auth account (read only)",
+      "passed": true
+    },
+    {
+      "name": "updated invitation PNG and envelope assets available",
+      "passed": true
+    },
+    {
+      "name": "no business or coordination row count changed during read-only checks",
+      "passed": true
+    }
+  ],
+  "limits": [
+    "No valid guest submission, album/photo mutation, signed upload or moderation performed.",
+    "Staff password sign-in/logout and protected HTTP endpoint with a valid staff JWT are not tested.",
+    "Privileged administrative RPC reads do not constitute an authenticated staff HTTP test."
+  ],
+  "counts_before": {
+    "wedding_albums": 3,
+    "wedding_photos": 0,
+    "wedding_settings": 1,
+    "wedding_staff": 1,
+    "wedding_rsvps": 0,
+    "wedding_messages": 0,
+    "wedding_api_limits": 0,
+    "wedding_api_uploads": 0
+  },
+  "administrative_read": {
+    "via": "server service credential RPC; not staff JWT",
+    "album_count": 3,
+    "response_count": 0
+  },
+  "staff_accounts": {
+    "checked": 1,
+    "all_exist": true,
+    "all_email_confirmed": true,
+    "none_banned": true,
+    "password_sign_in_tested": false
+  },
+  "counts_after": {
+    "wedding_albums": 3,
+    "wedding_photos": 0,
+    "wedding_settings": 1,
+    "wedding_staff": 1,
+    "wedding_rsvps": 0,
+    "wedding_messages": 0,
+    "wedding_api_limits": 0,
+    "wedding_api_uploads": 0
+  },
+  "public_readiness": {
+    "souvenirs_http": 200,
+    "messages_http": 200,
+    "gallery_available": false,
+    "private_photos_not_exposed": true
+  },
+  "passed": true
+}

@@ -1,5 +1,7 @@
 # Validation de la capture réelle avant activation — Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 14 novembre 2026, UTC. Projet configuré : `mcnpagbcehupdbhshcea`.
 
 **Précontrôles techniques validés. Activation non exécutée et autorisation finale toujours requise.** Aucun changement de `.env.local`, de permission hébergée, de bucket, de données réelles, aucun push ou déploiement.

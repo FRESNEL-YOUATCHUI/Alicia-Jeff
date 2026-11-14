@@ -1,5 +1,7 @@
 # Audit préalable à l’activation Supabase — Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 14 novembre 2026, UTC. Dossier : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`.
 
 **Décision : activation hébergée suspendue.** L’audit du code SQL, les corrections locales, la préparation du retour arrière et les essais PostgreSQL isolés sont terminés. Les droits SQL actuels complets ne sont pas encore capturés : il serait incorrect de déclarer le rollback spécifique à la production prêt ou la sauvegarde transactionnelle réalisée. L’accord de principe n’est pas une autorisation d’exécuter. Aucun DDL, changement de permission, écriture métier, push ou déploiement distant n’a été effectué.

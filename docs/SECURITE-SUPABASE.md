@@ -1,5 +1,7 @@
 # Rapport de sécurité Supabase — Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 Audit des exports disponibles le 13 novembre 2026 (UTC). **Aucune politique, permission, donnée réelle ou configuration hébergée modifiée. Aucun push et aucun déploiement.**
 
 ## Conclusion Storage

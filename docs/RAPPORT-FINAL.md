@@ -1,5 +1,7 @@
 # Finalisation locale — Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 **Mise à jour du démarrage et des contrôles : consulter `DIAGNOSTIC-VALIDATION.md` (rapport A–F du 14 novembre 2026). Les anciennes commandes/métriques ci-dessous décrivent la livraison précédente. Le démarrage courant est `npm run dev` sur le port 3000.**
 
 Dossier : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`

@@ -1,5 +1,7 @@
 # Supabase SQL Editor — procédure d’activation Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 14 novembre 2026, UTC. Projet attendu : **alicia-jeff-wedding**, référence **mcnpagbcehupdbhshcea**.
 Dossier local : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`.
 

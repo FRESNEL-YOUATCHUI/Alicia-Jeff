@@ -1,5 +1,7 @@
 # Diagnostic, corrections et validation — Alicia & Jeff
 
+> **État courant après activation :** le propriétaire a exécuté le SQL autorisé ; vérification SQL positive, données préservées et `npm run verify` réussi (code 0). Voir [RAPPORT-POST-ACTIVATION.md](RAPPORT-POST-ACTIVATION.md). Les mentions de blocage/attente ci-dessous décrivent les étapes antérieures ; les changements Storage restent non appliqués.
+
 Date de livraison : 14 novembre 2026, UTC. Dossier : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`. Branche locale : `codex/supabase-vercel-finalisation`.
 
 **État : démarrage Windows corrigé et testé, frontend accessible, administration anonyme en 401, aucune erreur de passerelle observée après correction. La validation fonctionnelle hébergée reste bloquée par l’absence des RPC Supabase.** Aucune migration, permission, donnée réelle, clé, configuration de production, opération GitHub ou déploiement n’a été modifié à distance.

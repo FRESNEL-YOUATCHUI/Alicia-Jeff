@@ -1,0 +1,67 @@
+{
+  "reviewed_at": "2026-11-14T18:19:34.617Z",
+  "owner_reports_activation_executed": true,
+  "agent_executed_activation": false,
+  "agent_hosted_mutations_performed": false,
+  "verification_checked_at": "2026-11-14T18:17:51.802487+00:00",
+  "postactivation_json_sha256": "11d5d929f2b8ee447c40bc36b5652926eccbf41148889c0d1badad420f081c7b",
+  "preactivation_json_sha256": "2d3744623c280a02f081c392676bc2cb87326671aa47c3d23fe5508a05df62d3",
+  "read_only": true,
+  "all_checks_passed": true,
+  "checks": {
+    "execute_server_only": true,
+    "server_table_access": true,
+    "three_valid_indexes": true,
+    "private_photo_bucket": true,
+    "eight_tables_with_rls": true,
+    "twenty_functions_present": true,
+    "functions_invoker_and_path": true,
+    "authenticated_own_role_lookup": true,
+    "browser_business_access_denied": true
+  },
+  "business_comparisons": [
+    {
+      "table": "wedding_albums",
+      "count_before": 3,
+      "count_after": 3,
+      "counts_match": true,
+      "fingerprints_match": true
+    },
+    {
+      "table": "wedding_photos",
+      "count_before": 0,
+      "count_after": 0,
+      "counts_match": true,
+      "fingerprints_match": true
+    },
+    {
+      "table": "wedding_settings",
+      "count_before": 1,
+      "count_after": 1,
+      "counts_match": true,
+      "fingerprints_match": true
+    },
+    {
+      "table": "wedding_staff",
+      "count_before": 1,
+      "count_after": 1,
+      "counts_match": true,
+      "fingerprints_match": true
+    },
+    {
+      "table": "wedding_rsvps",
+      "count_before": 0,
+      "count_after": 0,
+      "counts_match": true,
+      "fingerprints_match": true
+    },
+    {
+      "table": "wedding_messages",
+      "count_before": 0,
+      "count_after": 0,
+      "counts_match": true,
+      "fingerprints_match": true
+    }
+  ],
+  "all_business_rows_preserved": true
+}

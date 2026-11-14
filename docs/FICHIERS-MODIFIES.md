@@ -205,3 +205,26 @@ Captures et rollback privés conservés hors Git. Aucune modification de .env.lo
 | `scripts/check-snapshot-current-readonly.mjs` | créé |
 | `scripts/rehearse-activation-snapshot.mjs` | créé |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## Vérification après activation par le propriétaire — 14 novembre 2026
+
+Rapport SQL/API et documentation actualisés ; aucune écriture hébergée supplémentaire par l’agent. Fichiers privés, .gitignore et invitation.png exclus.
+
+| Fichier | Action |
+| --- | --- |
+| `MARIAGE-README.md` | modifié |
+| `docs/AUDIT-ACTIVATION-SUPABASE.md` | modifié |
+| `docs/DIAGNOSTIC-VALIDATION.md` | modifié |
+| `docs/PROCEDURE-SUPABASE-SQL-EDITOR.md` | modifié |
+| `docs/RAPPORT-FINAL.md` | modifié |
+| `docs/RAPPORT-POST-ACTIVATION.md` | créé |
+| `docs/SECURITE-SUPABASE.md` | modifié |
+| `docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md` | modifié |
+| `docs/audit/activation-security.json` | modifié |
+| `docs/audit/local-runtime.json` | modifié |
+| `docs/audit/postactivation-api-readonly.json` | créé |
+| `docs/audit/postactivation-checks.json` | créé |
+| `docs/audit/postactivation-review.json` | créé |
+| `docs/audit/preactivation-current-readonly.json` | modifié |
+| `scripts/verify-postactivation-readonly.mjs` | créé |
+| `docs/FICHIERS-MODIFIES.md` | manifeste complété |

@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-11-14T18:31:37.536Z",
+  "activation_executed_by_owner": true,
+  "activation_executed_by_agent": false,
+  "owner_final_authorization_received": true,
+  "additional_hosted_mutations_by_agent": false,
+  "env_local_modified": false,
+  "sql_checks_passed": 9,
+  "business_fingerprints_preserved": 6,
+  "verify": {
+    "executed": true,
+    "exit_code": 0,
+    "steps": {
+      "diagnose": "passed",
+      "typecheck": "passed",
+      "lint": "passed",
+      "test": {
+        "historical_passed": 7,
+        "api_sql_runtime_passed": 63,
+        "experience_assertions_passed": 7,
+        "failed": 0
+      },
+      "build": "passed",
+      "frontend_secrets": {
+        "passed": true,
+        "text_artifacts": 7
+      },
+      "runtime": {
+        "http_checks_passed": 16,
+        "readiness": {
+          "status": 200,
+          "code": "ready",
+          "ready": true
+        }
+      }
+    }
+  },
+  "additional_real_read_checks": 26,
+  "staff_account_readiness": {
+    "checked": 1,
+    "all_exist": true,
+    "all_email_confirmed": true,
+    "none_banned": true,
+    "password_sign_in_tested": false
+  },
+  "remaining_validation": [
+    "No valid guest submission, album/photo mutation, signed upload or moderation performed.",
+    "Staff password sign-in/logout and protected HTTP endpoint with a valid staff JWT are not tested.",
+    "Privileged administrative RPC reads do not constitute an authenticated staff HTTP test."
+  ],
+  "configuration_pending": {
+    "cron_secret_not_configured_locally": true,
+    "storage_ingestion_limits_not_set": true,
+    "production_vercel_environment_not_inspected": true
+  },
+  "github_push": false,
+  "vercel_deployment": false
+}

@@ -60,3 +60,7 @@ Prévoir les quatre variables Supabase dans les environnements Vercel nécessair
 ## Audit pré-déploiement final
 
 Le rapport courant est [docs/AUDIT-PREDEPLOIEMENT.md](docs/AUDIT-PREDEPLOIEMENT.md) : vérification globale réussie, protection du cron testée et proposition privée JPEG/PNG/WebP à 20 Mio dans `docs/storage-ingestion-proposal.json`. Les limites ne sont pas appliquées ; aucun secret ni déploiement n’est modifié. CRON_SECRET est absent localement et sa présence en Production reste à vérifier ; le cron refuse l’exécution tant que sa configuration manque.
+
+## RSVP et entrée QR — 18 novembre 2026
+
+Le RSVP individuel lance le téléchargement du billet. Le [bilan RSVP/QR](docs/RSVP-QR-FINALISATION.md) présente le code, les tests et la feuille privée. La migration 004 et l'accès privé Google du backend nécessitent encore votre intervention autorisée. Aucun SQL hébergé, secret, push ou déploiement n'a été modifié. La commande de préparation en lecture seule est : npm run inspect:tickets.

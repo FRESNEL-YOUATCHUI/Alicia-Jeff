@@ -76,6 +76,7 @@ export interface Ticket {
   rsvp_id: string | null;
   ticket_number: string;
   qr_token: string;
+  qr_version?: 2;
   bride_first_name: string;
   groom_first_name: string;
   wedding_date: string | null;

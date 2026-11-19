@@ -29,6 +29,9 @@ export async function api<T>(route:string,options:RequestInit={}):Promise<T>{
   }
   return data as T;
 }
+const memoryIds=new Map<string,string>();
 export function persistentId(key:string):string{
-  try{const previous=localStorage.getItem(key);if(previous)return previous;const value=crypto.randomUUID();localStorage.setItem(key,value);return value;}catch{return crypto.randomUUID();}
+  if(memoryIds.has(key))return memoryIds.get(key)!;
+  let value:string;try{value=localStorage.getItem(key)||crypto.randomUUID();localStorage.setItem(key,value);}catch{value=crypto.randomUUID();}
+  memoryIds.set(key,value);return value;
 }

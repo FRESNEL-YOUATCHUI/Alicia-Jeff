@@ -247,3 +247,7 @@ Audit, tests isolés et sondes réelles refusées uniquement. Aucun secret, Stor
 | `scripts/audit-predeploy-readonly.mjs` | créé |
 | `tests/cron-security.test.mjs` | créé |
 | `docs/FICHIERS-MODIFIES.md` | manifeste complété |
+
+## RSVP et contrôle des billets — 18 novembre 2026
+
+La liste exacte des fichiers et les preuves de validation figurent dans [RSVP-QR-FINALISATION.md](RSVP-QR-FINALISATION.md). Les exports privés, classeurs des invités et données de test restent hors Git.

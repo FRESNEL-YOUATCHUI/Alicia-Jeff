@@ -8,3 +8,4 @@ dist/
 .wedding-data/
 .qa-artifacts/
 .vercel
+.env*

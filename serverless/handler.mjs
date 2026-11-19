@@ -1,16 +1,21 @@
 import {timingSafeEqual} from 'node:crypto';
 import {ApiError,checkOrigin,readJson,requireMethod,routeFromRequest,sendError,sendJson} from './http.mjs';
-import {albumPatch,bool,messageInput,offset,rejectUnknown,rsvpInput,string,uploadInput,uuid} from './validation.mjs';
+import {albumPatch,bool,clientRef,messageInput,offset,rejectUnknown,rsvpInput,string,uploadInput,uuid} from './validation.mjs';
 import {getSupabase,requireStaff,serverConfig,bearerToken} from './supabase.mjs';
 import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
+import {OfficialList} from './official-list.mjs';
+import {isTicketToken,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
+import {hashRef} from './repository.mjs';
+const officialList=new OfficialList();
 const ok={ok:true};
 export function createHandler(dependencies){
   return async function handler(req,res){
+    let requestRoute;
     try{
-      const {route,query}=routeFromRequest(req);
+      const {route,query}=routeFromRequest(req);requestRoute=route;
       if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless'});return;}
-      const known=['/api/rsvp','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
+      const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
       if(!known)throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       if(route==='/api/internal/uploads/cleanup'){
         requireMethod(req,['GET']);
@@ -28,7 +33,41 @@ export function createHandler(dependencies){
       if(route.startsWith('/api/admin/'))staff=await deps.authenticate(req);
       const rate=async(scope,limit=30,seconds=900)=>repo.rate(req,scope,limit,seconds,deps.rateSecret);
       let result,status=200;
-      if(route==='/api/rsvp'){
+      if(route==='/api/tickets/open'){
+        requireMethod(req,['GET']);
+        const token=query.get('token');
+        if(!isTicketToken(token)){sendTicketPage(req,res,{token:'',secret:deps.rateSecret,invalid:true});return;}
+        await rate('ticket-open',120,60);
+        sendTicketPage(req,res,{token,secret:deps.rateSecret});return;
+      }else if(route==='/api/tickets/verify'){
+        requireMethod(req,['POST']);
+        const body=await readJson(req);rejectUnknown(body,['token','proof']);
+        if(!isTicketToken(body.token)){result=ticketResult('unknown');}
+        else{
+          requireScanProof(req,body,deps.rateSecret);
+          await rate('ticket-verify',120,60);await rate('ticket:'+hashRef(body.token),6,60);
+          const guest=await repo.lookupTicket(body.token);
+          if(!guest)result=ticketResult('unknown');
+          else if(guest.checked_in_at)result=ticketResult('used',{checked_in_at:guest.checked_in_at});
+          else{
+            // Keep Sheets requests below its per-account quota. A denied request never admits.
+            await repo.rpc('rate',{p_key:hashRef('official-sheet-read-v1'),p_limit:45,p_seconds:60});
+            const match=await (deps.officialList??officialList).match(guest);
+            if(match.status==='absent')result=ticketResult('absent');
+            else if(match.status==='ambiguous')result=ticketResult('error',{reason:'ambiguous_name'});
+            else if(match.status!=='recognized')throw new ApiError(503,'official_list_unavailable','Vérification impossible.');
+            else{
+              const entry=await repo.enterTicket(body.token,guest.updated_at,match.name);
+              const state=['valid','used','unknown'].includes(entry.status)?entry.status:'error';
+              result=ticketResult(state,{...(entry.checked_in_at?{checked_in_at:entry.checked_in_at}:{}),
+                ...(state==='valid'?{guest_full_name:guest.first_name+' '+guest.last_name}:{})});
+            }
+          }
+        }
+      }else if(route==='/api/rsvp/ticket'){
+        requireMethod(req,['POST']);const body=await readJson(req);rejectUnknown(body,['client_ref']);
+        const ref=clientRef(body.client_ref);await rate('ticket-restore',40);result=await repo.restoreTicket(ref);
+      }else if(route==='/api/rsvp'){
         requireMethod(req,['POST']);const input=rsvpInput(await readJson(req));await rate('rsvp',40);result=await repo.rsvp(input);
       }else if(route==='/api/messages'){
         requireMethod(req,['GET','POST']);
@@ -93,7 +132,15 @@ export function createHandler(dependencies){
         const expired=await repo.cleanup();await storage.remove(expired.map(p=>p.storage_path));await repo.cleaned(expired.map(p=>p.id));result={ok:true,cleaned:expired.length};
       }else throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       sendJson(res,status,result);
-    }catch(error){sendError(res,error);}
+    }catch(error){
+      if(requestRoute==='/api/tickets/open'&&req.method==='GET'){sendTicketPage(req,res,{token:'',secret:'',failed:true});return;}
+      if(requestRoute==='/api/tickets/verify'){
+        const known=error instanceof ApiError;
+        sendJson(res,known?error.status:500,{...ticketResult('error'),code:known?error.code:'verification_unavailable',
+          error:'Vérification impossible. Aucune entrée autorisée.'},known?error.headers:{});return;
+      }
+      sendError(res,error);
+    }
   };
 }
 export default createHandler();

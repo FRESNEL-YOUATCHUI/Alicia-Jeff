@@ -1,6 +1,13 @@
 import QRCode from 'qrcode';
 import type {Ticket} from './types';
-export const ticketQrValue=(ticket:Ticket)=>`AJ:${ticket.qr_token}`;
+export function ticketQrValue(ticket:Ticket,origin=window.location.origin){
+  // Existing cards remain downloadable before the separately authorized SQL activation.
+  if(ticket.qr_version!==2)return 'AJ:'+ticket.qr_token;
+  if(!/^[A-Za-z0-9_-]{43}$/.test(ticket.qr_token))throw new Error('Le billet doit être récupéré à nouveau.');
+  const base=new URL(origin);
+  if(base.protocol!=='https:'&&!(base.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(base.hostname)))throw new Error('Utilisez une adresse sécurisée pour le billet.');
+  const url=new URL('/api/tickets/open',base.origin);url.searchParams.set('token',ticket.qr_token);return url.href;
+}
 
 export async function ticketImage(ticket:Ticket):Promise<string> {
   const image=new Image();image.src='/wedding/invitation.png';await image.decode();
@@ -20,7 +27,7 @@ export async function ticketImage(ticket:Ticket):Promise<string> {
   if(line)lines.push(line);
   // One exceptionally long word is scaled to the available width rather than cut.
   lines.slice(0,2).forEach((value,i)=>c.fillText(value,60,cardHeight+124+i*42,maxWidth));
-  c.fillStyle='#393e34';c.font='26px Arial';c.fillText(`${ticket.allowed_persons} personne${ticket.allowed_persons>1?'s':''} · Vendredi 18 décembre 2026`,60,cardHeight+215);
+  c.fillStyle='#393e34';c.font='26px Arial';c.fillText('Invitation individuelle · Vendredi 18 décembre 2026',60,cardHeight+215);
   c.fillStyle='#9e5e4e';c.font='24px Arial';c.fillText(`Invitation ${ticket.ticket_number}`,60,cardHeight+265);
   c.fillStyle='#737868';c.font='21px Arial';c.fillText('15 h · Ambassade du Cameroun au Sénégal   |   19 h · Fun Time, Bourguiba',60,cardHeight+314);
   c.font='20px Arial';c.fillText('Votre présence nous fera un immense plaisir.',60,cardHeight+351);
@@ -36,7 +43,7 @@ export async function downloadTicket(ticket:Ticket,format:'png'|'pdf') {
     const scale=Math.min((pageWidth-2*margin)/properties.width,(pageHeight-2*margin)/properties.height);
     const width=properties.width*scale,height=properties.height*scale;
     pdf.addImage(data,'PNG',(pageWidth-width)/2,(pageHeight-height)/2,width,height,undefined,'FAST');
-    pdf.save(`Invitation-${ticket.ticket_number}.pdf`);
+    await pdf.save(`Invitation-${ticket.ticket_number}.pdf`,{returnPromise:true});
   }else{
     const blob=await(await fetch(data)).blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`Invitation-${ticket.ticket_number}.png`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30_000);

@@ -1,4 +1,4 @@
-import {createHash,createHmac} from 'node:crypto';
+import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {ApiError} from './http.mjs';
 export const hashRef=value=>createHash('sha256').update(value).digest('hex');
 export class Repository {
@@ -10,7 +10,7 @@ export class Repository {
       const known=codes[error.code];
       if(known)throw new ApiError(...known,known[0]===429?{'Retry-After':'60'}:{});
       // Schema/cache errors remain actionable without exposing SQL or private SDK details.
-      if(['PGRST202','PGRST205','42883','42P01','42703'].includes(error.code))throw new ApiError(503,'schema_required','Le service attend la validation de son schéma de données.');
+      if(['PGRST202','PGRST205','42883','42P01','42703'].includes(error.code)){const failure=new ApiError(503,'schema_required','Le service attend la validation de son schéma de données.');failure.missingTicketActivation=name==='confirm'&&error.code==='PGRST202';throw failure;}
       throw new ApiError(503,'database_unavailable','Les données sont momentanément indisponibles.');
     }
     return data;
@@ -21,7 +21,18 @@ export class Repository {
     const key=createHmac('sha256',secret).update(scope+':'+String(ip).split(',')[0].trim()).digest('hex');
     await this.rpc('rate',{p_key:key,p_limit:limit,p_seconds:seconds});
   }
-  rsvp(input){const {client_ref,...fields}=input;return this.rpc('rsvp',{p_input:{...fields,ref_hash:hashRef(client_ref)}});}
+  async rsvp(input){
+    const {client_ref,...fields}=input,p_input={...fields,ref_hash:hashRef(client_ref)};
+    try{return await this.rpc('confirm',{p_input,p_token:randomBytes(32).toString('base64url')});}
+    catch(error){
+      if(!(error instanceof ApiError)||!error.missingTicketActivation)throw error;
+      // Explicit pre-activation compatibility; never simulates an entry authorization.
+      return {...await this.rpc('rsvp',{p_input}),entry_verification_ready:false};
+    }
+  }
+  restoreTicket(ref){return this.rpc('ticket_restore',{p_ref_hash:hashRef(ref),p_token:randomBytes(32).toString('base64url')});}
+  lookupTicket(token){return this.rpc('ticket_lookup',{p_token:token});}
+  enterTicket(token,version,name){return this.rpc('ticket_enter',{p_token:token,p_expected_updated_at:version,p_name_hash:hashRef(name)});}
   message(input){const {client_ref,...fields}=input;return this.rpc('message',{p_input:{...fields,ref_hash:hashRef(client_ref)}});}
   publicState(){return this.rpc('public_state');}
   messages(page){return this.rpc('messages',{p_offset:page});}

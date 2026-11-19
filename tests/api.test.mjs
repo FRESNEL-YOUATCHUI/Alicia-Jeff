@@ -44,7 +44,7 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
   assert.equal((await call('/api/admin/uploads/cleanup',{...json({}),token:'no-role'})).status,403);
  });
  let ticket;
- const ref=randomUUID(),input={first_name:'Jean Pierre',last_name:'Ndiaye Diop',participants:2,song:'Une chanson',message:'Tous nos vœux',client_ref:ref};
+ const ref=randomUUID(),input={first_name:'Jean Pierre',last_name:'Ndiaye Diop',song:'Une chanson',message:'Tous nos vœux',client_ref:ref};
  await t.test('RSVP validates input and rejects cross-origin / oversized forms',async()=>{
   assert.equal((await call('/api/rsvp',json({...input,participants:0}))).status,400);
   assert.equal((await call('/api/rsvp',json({...input,website:'spam'}))).status,400);
@@ -54,15 +54,15 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
  await t.test('valid RSVP retains ticket/QR contract and concurrent retries use one UUID',async()=>{
   const results=await Promise.all(Array.from({length:4},()=>call('/api/rsvp',json(input))));
   assert.ok(results.every(r=>r.status===200));ticket=results[0].body.ticket;
-  assert.ok(results.every(r=>r.body.ticket.qr_token===ticket.id));
+  assert.ok(results.every(r=>r.body.ticket.qr_token===ticket.qr_token));
   assert.equal(ticket.ticket_number,'AJ-'+ticket.id.slice(0,8).toUpperCase());
-  assert.equal(ticket.guest_first_name,'Jean Pierre');assert.equal(ticket.allowed_persons,2);
+  assert.equal(ticket.guest_first_name,'Jean Pierre');assert.equal(ticket.allowed_persons,1);assert.match(ticket.qr_token,/^[A-Za-z0-9_-]{43}$/);
   assert.equal((await pg.query('select count(*)::int n from wedding_rsvps')).rows[0].n,1);
   assert.equal((await pg.query('select count(*)::int n from wedding_messages')).rows[0].n,1);
  });
  await t.test('RSVP update preserves ID, creation date and moderation',async()=>{
   await pg.query('update wedding_messages set hidden=true');
-  const result=await call('/api/rsvp',json({...input,participants:3}));
+  const result=await call('/api/rsvp',json({...input,song:'Chanson modifiée'}));
   assert.equal(result.body.ticket.id,ticket.id);assert.equal(result.body.ticket.created_at,ticket.created_at);
   assert.equal(result.body.message_published,false);
  });
@@ -164,7 +164,7 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
   const existingRef=randomUUID(),existingId=randomUUID();
   await pg.query('insert into wedding_rsvps(id,ref_hash,first_name,last_name,participants) values($1,$2,$3,$4,1)',[existingId,hashRef(existingRef),'Ancien','Invité']);
   const result=await call('/api/rsvp',json({...input,client_ref:existingRef}));
-  assert.equal(result.body.ticket.qr_token,existingId);
+  assert.equal(result.body.ticket.id,existingId);assert.match(result.body.ticket.qr_token,/^[A-Za-z0-9_-]{43}$/);
  });
  await t.test('table grants block direct reads; authenticated own-role lookup still works',async()=>{
   assert.equal((await pg.query("select has_table_privilege('anon','public.wedding_rsvps','select') ok")).rows[0].ok,false);

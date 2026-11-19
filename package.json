@@ -23,10 +23,13 @@
     "diagnose": "node scripts/diagnose-runtime.mjs",
     "audit:activation": "node --test tests/activation*.test.mjs",
     "backup:business": "node scripts/backup-business-readonly.mjs",
-    "prepare:rollback": "node scripts/prepare-activation-rollback.mjs"
+    "prepare:rollback": "node scripts/prepare-activation-rollback.mjs",
+    "test:concurrency": "node scripts/test-ticket-concurrency.mjs",
+    "inspect:tickets": "node scripts/inspect-ticket-readiness.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "google-auth-library": "^10.9.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.446.0",
     "qrcode": "^1.5.4",
@@ -45,6 +48,8 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",

@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-18",
+  "google_sheet": {
+    "id": "1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0",
+    "url": "https://docs.google.com/spreadsheets/d/1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0/edit",
+    "people": 72,
+    "header_rows": 1,
+    "readback_matches_source": true,
+    "shared": false,
+    "permission_types": [
+      "user:owner"
+    ],
+    "public_or_domain_permissions": false,
+    "name_order": "mixed"
+  },
+  "browser": {
+    "environment": "isolated PostgreSQL fixture and real built application; no hosted RSVP writes",
+    "automatic_pdf_saved": true,
+    "manual_png_saved": true,
+    "download_failure_preserves_confirmation": true,
+    "retry_after_failure_ui_started": true,
+    "retry_after_failure_file_observed": false,
+    "confirmation_restored_after_reload": true,
+    "companions_field_count": 0,
+    "qr_from_downloaded_png_decoded": true,
+    "qr_png_size": [
+      1800,
+      1403
+    ],
+    "scan_result_valid_observed": true,
+    "scan_result_used_observed": true,
+    "mobile_viewport": 390,
+    "mobile_document_width": 375,
+    "desktop_viewport": 1440,
+    "desktop_document_width": 1425,
+    "first_success_flow_console_errors": 0,
+    "native_phone_camera_tested": false
+  },
+  "concurrency": {
+    "engine": "PostgreSQL 16.9 local temporary cluster",
+    "distinct_backend_pids": true,
+    "same_ticket": [
+      "used",
+      "valid"
+    ],
+    "different_tickets_same_name": [
+      "used",
+      "valid"
+    ],
+    "hosted_connection": false
+  },
+  "hosted_migration_executed": false,
+  "existing_secrets_modified": false,
+  "github_push": false,
+  "vercel_deployment": false
+}

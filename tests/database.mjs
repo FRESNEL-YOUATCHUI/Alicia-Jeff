@@ -8,6 +8,7 @@ export async function database(){
  await pg.exec(sql);
  const access=await fs.readFile(new URL('../supabase/migrations/002_api_only_access.sql',import.meta.url),'utf8');
  await pg.exec(access);await pg.exec(access);
+ await pg.exec(await fs.readFile(new URL('../supabase/migrations/004_ticket_entry.sql',import.meta.url),'utf8'));
  return {pg,sql};
 }
 export function clientFor(pg){

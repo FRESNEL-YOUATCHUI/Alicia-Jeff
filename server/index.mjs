@@ -111,15 +111,15 @@ export async function createWeddingServer(options) {
         if(body.website)throw new HttpError(400,'Le formulaire n’a pas pu être envoyé.');
         const first=text(body.first_name,80,true),last=text(body.last_name,80,true);
         const ref=text(body.client_ref,64,true);
-        if(!/^[a-zA-Z0-9-]{32,64}$/.test(ref)||!Number.isInteger(body.participants)||body.participants<1||body.participants>20)throw new HttpError(400,'Vérifiez le nom et le nombre de participants.');
+        if(!/^[a-zA-Z0-9-]{32,64}$/.test(ref)||!Number.isInteger(body.participants??1)||body.participants<1||body.participants>20)throw new HttpError(400,'Vérifiez le nom et le nombre de participants.');
         const message=text(body.message||'',2000),song=text(body.song||'',200);
         const refHash=createHash('sha256').update(ref).digest('hex');
         const result=await mutate(draft=>{
           let row=draft.responses.find(r=>r.ref_hash===refHash);
           if(!row){row={id:randomUUID(),ref_hash:refHash,created_at:new Date(now()).toISOString()};draft.responses.push(row);}
-          Object.assign(row,{first_name:first,last_name:last,participants:body.participants,song,updated_at:new Date(now()).toISOString()});
+          Object.assign(row,{first_name:first,last_name:last,participants:body.participants??1,song,updated_at:new Date(now()).toISOString()});
           if(message){let m=draft.messages.find(m=>m.response_id===row.id);if(!m){m={id:randomUUID(),response_id:row.id,created_at:new Date(now()).toISOString(),hidden:false};draft.messages.push(m);}Object.assign(m,{author:first,body:message});}
-          return {ticket:{id:row.id,guest_id:row.id,rsvp_id:row.id,ticket_number:'AJ-'+row.id.slice(0,8).toUpperCase(),qr_token:row.id,bride_first_name:'Alicia',groom_first_name:'Jeff',wedding_date:'2026-12-18T15:00:00Z',venue_name:'Dakar · Ambassade du Cameroun & Fun Time',guest_full_name:first+' '+last,guest_first_name:first,guest_last_name:last,allowed_persons:body.participants,pdf_url:null,png_url:null,created_at:row.created_at},message_published:Boolean(message)};
+          return {ticket:{id:row.id,guest_id:row.id,rsvp_id:row.id,ticket_number:'AJ-'+row.id.slice(0,8).toUpperCase(),qr_token:row.id,bride_first_name:'Alicia',groom_first_name:'Jeff',wedding_date:'2026-12-18T15:00:00Z',venue_name:'Dakar · Ambassade du Cameroun & Fun Time',guest_full_name:first+' '+last,guest_first_name:first,guest_last_name:last,allowed_persons:body.participants??1,pdf_url:null,png_url:null,created_at:row.created_at},message_published:Boolean(message)};
         });send(res,200,result);return;
       }
       if(route==='/api/messages' && req.method==='POST'){

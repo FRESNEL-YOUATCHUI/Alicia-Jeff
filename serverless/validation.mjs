@@ -15,8 +15,8 @@ export function rejectUnknown(body,allowed){if(Object.keys(body).some(k=>!allowe
 export function rsvpInput(body){
  rejectUnknown(body,['first_name','last_name','participants','song','message','website','client_ref']);
  if(body.website)throw new ApiError(400,'invalid_submission','Le formulaire n’a pas pu être envoyé.');
- if(!Number.isInteger(body.participants)||body.participants<1||body.participants>20)throw new ApiError(400,'invalid_participants','Le nombre de personnes doit être compris entre 1 et 20.');
- return {first_name:string(body.first_name,80,{required:true,field:'prénom'}),last_name:string(body.last_name,80,{required:true,field:'nom'}),participants:body.participants,song:string(body.song??'',200,{field:'chanson'}),message:string(body.message??'',2000,{field:'message',multiline:true}),client_ref:clientRef(body.client_ref)};
+ if(body.participants!==undefined&&body.participants!==1)throw new ApiError(400,'invalid_participants','La confirmation est individuelle.');
+ return {first_name:string(body.first_name,80,{required:true,field:'prénom'}),last_name:string(body.last_name,80,{required:true,field:'nom'}),participants:1,song:string(body.song??'',200,{field:'chanson'}),message:string(body.message??'',2000,{field:'message',multiline:true}),client_ref:clientRef(body.client_ref)};
 }
 export function messageInput(body){rejectUnknown(body,['author','body','client_ref','website']);if(body.website)throw new ApiError(400,'invalid_submission','Le message n’a pas pu être envoyé.');return{author:string(body.author,80,{required:true,field:'prénom'}),body:string(body.body,2000,{required:true,field:'message',multiline:true}),client_ref:clientRef(body.client_ref)};}
 export function uploadInput(body){

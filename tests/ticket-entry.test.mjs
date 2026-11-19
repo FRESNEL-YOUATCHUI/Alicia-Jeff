@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import {createServer,get} from 'node:http';
 import {randomBytes,randomUUID} from 'node:crypto';
 import {createHandler} from '../serverless/handler.mjs';
-import {Repository} from '../serverless/repository.mjs';
+import {Repository,hashRef} from '../serverless/repository.mjs';
 import {OfficialList,matchOfficialRows,normalizeGuestName,officialNames,inspectOfficialRows} from '../serverless/official-list.mjs';
 import {ApiError} from '../serverless/http.mjs';
 import {scanChallenge,requireScanProof} from '../serverless/ticket-page.mjs';
@@ -85,6 +85,17 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   const scanOnce=()=>post('/api/tickets/verify',{token:ticket.qr_token,proof:opened.input.proof},{Cookie:opened.cookie});
   const results=await Promise.all([scanOnce(),scanOnce()]);
   assert.deepEqual(results.map(x=>x.body.status).sort(),['used','valid']);
+ });
+ await t.test('a newly downloaded legacy card has an actionable URL and checks the existing RSVP',async()=>{
+  rows.push(['Legacy Invité']);
+  const legacy=(await repo.rpc('rsvp',{p_input:{first_name:'Legacy',last_name:'Invité',participants:1,ref_hash:hashRef(randomUUID())}})).ticket;
+  const opened=await open(legacy.qr_token);
+  assert.equal(opened.status,200);assert.equal(opened.input.invalid,false);
+  assert.equal((await pg.query('select count(*)::int n from wedding_ticket_entries where rsvp_id=$1',[legacy.id])).rows[0].n,0);
+  const result=await post('/api/tickets/verify',{token:legacy.qr_token,proof:opened.input.proof},{Cookie:opened.cookie});
+  assert.equal(result.body.status,'valid');assert.equal((await scan(legacy)).body.status,'used');
+  assert.equal((await pg.query('select count(*)::int n from wedding_ticket_entries where rsvp_id=$1',[legacy.id])).rows[0].n,1);
+  assert.equal((await scan({qr_token:randomUUID()})).body.status,'unknown');
  });
  await t.test('same official person cannot enter twice through two different RSVP references',async()=>{
   const another=(await confirm('Élodie','Ndiaye')).ticket;

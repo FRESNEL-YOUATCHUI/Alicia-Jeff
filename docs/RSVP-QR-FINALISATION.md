@@ -1,5 +1,7 @@
 # RSVP et billets QR — bilan du 18 novembre 2026
 
+**Mise à jour du 19 novembre :** voir le [diagnostic et les correctifs actuels](CORRECTION-QR-20261119.md). Ce bilan précise la version réellement en ligne et les prérequis encore bloqués.
+
 ## État réel
 
 Projet : `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`.

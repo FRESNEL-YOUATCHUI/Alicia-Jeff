@@ -1,6 +1,8 @@
 import {createHmac,createHash,randomBytes,timingSafeEqual} from 'node:crypto';
 import {ApiError} from './http.mjs';
 export const isTicketToken=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{43}$/.test(value);
+export const isLegacyTicket=value=>typeof value==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
+export const isTicketReference=value=>isTicketToken(value)||isLegacyTicket(value);
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const hmac=(secret,value)=>createHmac('sha256',secret).update('aj-ticket-navigation-v1:'+value).digest('base64url');
 const equal=(a,b)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y);};
@@ -13,7 +15,7 @@ export function scanChallenge(token,secret,now=Date.now()){
  return {proof:payload+'.'+hmac(secret,payload),nonce:JSON.parse(Buffer.from(payload,'base64url')).nonce};
 }
 export function requireScanProof(req,body,secret,now=Date.now()){
- if(isPreview(req)||!req.headers.origin||req.headers['sec-fetch-site']!=='same-origin')
+ if(isPreview(req)||!req.headers.origin||(req.headers['sec-fetch-site']&&req.headers['sec-fetch-site']!=='same-origin'))
   throw new ApiError(403,'scan_navigation_required','Ouvrez le billet directement dans votre navigateur.');
  const proof=body.proof;
  if(typeof proof!=='string'||proof.length>800)throw new ApiError(403,'scan_navigation_required','Rouvrez le lien du billet.');
@@ -42,13 +44,16 @@ export function sendTicketPage(req,res,{token,secret,invalid=false,failed=false}
  "const input="+input+";",
  "const title=document.getElementById('result'),detail=document.getElementById('detail'),name=document.getElementById('name'),action=document.getElementById('action');",
  "let started=false;",
+ "function retry(){action.textContent='Réessayer la vérification';action.hidden=false;action.onclick=()=>location.reload();}",
+ "function failure(code){title.textContent='ERREUR DE VÉRIFICATION';document.body.dataset.result='error';detail.textContent=code==='schema_required'?'Le contrôle des entrées n’est pas encore activé. Aucune entrée autorisée.':code==='official_list_unavailable'?'La liste officielle est indisponible. Aucune entrée autorisée.':'Vérification impossible. Aucune entrée autorisée.';retry();}",
+
  "async function verify(){if(started||document.visibilityState!=='visible'||document.prerendering)return;started=true;action.hidden=true;title.textContent='VÉRIFICATION EN COURS…';detail.textContent='Patientez quelques instants.';",
  "try{const response=await fetch('/api/tickets/verify',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:input.token,proof:input.proof}),signal:AbortSignal.timeout(20000)});const data=await response.json();",
- "if(!response.ok||!['valid','absent','unknown','used','error'].includes(data.status))throw Error();",
+ "if(!response.ok){failure(data.code);return;}if(!['valid','absent','unknown','used','error'].includes(data.status))throw Error();",
  "title.textContent=data.label;document.body.dataset.result=data.status;name.textContent=data.guest_full_name||'';",
  "detail.textContent=data.status==='valid'?'Première entrée enregistrée. Bienvenue !':data.status==='used'?'Entrée déjà enregistrée. Ne pas autoriser une seconde entrée.':data.status==='absent'?'Ce nom ne figure pas sur la liste officielle. Entrée non autorisée.':data.status==='unknown'?'Ce billet ne correspond à aucune confirmation. Entrée non autorisée.':data.reason==='ambiguous_name'?'Nom identique présent plusieurs fois dans la liste. Vérification humaine nécessaire. Entrée non autorisée.':'Vérification impossible. Entrée non autorisée.';",
- "}catch{title.textContent='ERREUR DE VÉRIFICATION';detail.textContent='Vérification impossible. Entrée non autorisée. Rouvrez le lien pour réessayer.';document.body.dataset.result='error';}}",
- "if(input.failed){title.textContent='ERREUR DE VÉRIFICATION';detail.textContent='Service indisponible. Aucune entrée autorisée.';action.hidden=true;}else if(input.invalid){title.textContent='BILLET NON RECONNU';detail.textContent='Identifiant invalide. Entrée non autorisée.';action.hidden=true;}",
+ "}catch{failure();}}",
+ "if(input.failed){failure();}else if(input.invalid){title.textContent='BILLET NON RECONNU';detail.textContent='Identifiant invalide. Entrée non autorisée.';action.hidden=true;}",
  "else if(input.blocked){title.textContent='APERÇU DU BILLET';detail.textContent='Aucune entrée enregistrée. Ouvrez le lien dans votre navigateur.';action.hidden=true;}",
  "else{action.addEventListener('click',event=>{if(event.isTrusted)void verify();});",
  "if(input.automatic){let timer;const resume=()=>{clearTimeout(timer);if(document.visibilityState==='visible'&&!document.prerendering&&document.hasFocus())timer=setTimeout(()=>void verify(),700);};document.addEventListener('visibilitychange',resume);window.addEventListener('focus',resume);document.addEventListener('prerenderingchange',resume);resume();}}"

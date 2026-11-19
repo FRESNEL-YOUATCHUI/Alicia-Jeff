@@ -31,6 +31,15 @@ export class Repository {
     }
   }
   restoreTicket(ref){return this.rpc('ticket_restore',{p_ref_hash:hashRef(ref),p_token:randomBytes(32).toString('base64url')});}
+  async resolveLegacyTicket(id){
+    const {data,error}=await this.client.from('wedding_rsvps').select('ref_hash').eq('id',id.toLowerCase()).maybeSingle();
+    if(error)throw new ApiError(503,'database_unavailable','Les données sont momentanément indisponibles.');
+    if(!data)return null;
+    try{
+      const restored=await this.rpc('ticket_restore',{p_ref_hash:data.ref_hash,p_token:randomBytes(32).toString('base64url')});
+      return restored.ticket.qr_token;
+    }catch(error){if(error instanceof ApiError&&error.status===404)return null;throw error;}
+  }
   lookupTicket(token){return this.rpc('ticket_lookup',{p_token:token});}
   enterTicket(token,version,name){return this.rpc('ticket_enter',{p_token:token,p_expected_updated_at:version,p_name_hash:hashRef(name)});}
   message(input){const {client_ref,...fields}=input;return this.rpc('message',{p_input:{...fields,ref_hash:hashRef(client_ref)}});}

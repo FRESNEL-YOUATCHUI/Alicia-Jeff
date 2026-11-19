@@ -1,6 +1,8 @@
 import {JWT} from 'google-auth-library';
 import {ApiError} from './http.mjs';
 export const normalizeGuestName=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/gu,' ');
+export const DEFAULT_SHEET_ID='1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0';
+export const DEFAULT_SHEET_RANGE="'Invités'!A2:A";
 const unavailable=()=>new ApiError(503,'official_list_unavailable','La liste officielle est indisponible. Aucune entrée autorisée.');
 export function officialNames(guest,order='mixed'){
  if(!['first_last','last_first','mixed'].includes(order))throw unavailable();
@@ -26,8 +28,8 @@ export class OfficialList {
  }
  async match(guest){
   const env=this.env,names=officialNames(guest,env.GUEST_NAME_ORDER||'mixed');
-  const id=env.GOOGLE_SHEETS_SPREADSHEET_ID,range=env.GOOGLE_SHEETS_RANGE;
-  if(!id||!/^[A-Za-z0-9_-]{20,200}$/.test(id)||!range||!/^'[^']{1,100}'!A2:A10001$/.test(range)
+  const id=env.GOOGLE_SHEETS_SPREADSHEET_ID||DEFAULT_SHEET_ID,range=env.GOOGLE_SHEETS_RANGE||DEFAULT_SHEET_RANGE;
+  if(!id||!/^[A-Za-z0-9_-]{20,200}$/.test(id)||!range||!/^'[^']{1,100}'!A2:A(?:10001)?$/.test(range)
     ||!env.GOOGLE_SERVICE_ACCOUNT_EMAIL||!env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY)throw unavailable();
   try{
    this.auth??=this.authFactory({email:env.GOOGLE_SERVICE_ACCOUNT_EMAIL,

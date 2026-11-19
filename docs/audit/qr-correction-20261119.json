@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-19",
+  "local": {
+    "origin": "http://127.0.0.1:3000",
+    "home": 200,
+    "asset": "/assets/index-CZHRA8bz.js",
+    "release": "rsvp-qr-20261119",
+    "individual_rsvp": true,
+    "participant_selector": false,
+    "single_person_copy": true,
+    "canonical_qr_domain": true,
+    "protected_admin_status": 401,
+    "qr_result_route_status": 200,
+    "qr_result_content_type": "text/html; charset=utf-8",
+    "no_valid_rsvp_submitted": true,
+    "no_admission_attempted": true
+  },
+  "live": {
+    "checked_at": "2026-11-19T00:47:57.125Z",
+    "origin": "https://alicia-jeff.vercel.app",
+    "read_only": true,
+    "home": {
+      "status": 200,
+      "redirect": null,
+      "release": null
+    },
+    "bundles": [
+      {
+        "path": "/assets/index-BEupU42h.js",
+        "status": 200,
+        "has_participant_selector": true,
+        "has_individual_text": false,
+        "has_legacy_plain_qr": true
+      }
+    ],
+    "health": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "backend": "supabase-serverless"
+      }
+    }
+  },
+  "migration": {
+    "project": "mcnpagbcehupdbhshcea",
+    "migration": "supabase/migrations/004_ticket_entry.sql",
+    "sha256": "6308483d162d805f019b607335f128446251e8eec33392102a0c25fe99ab53cf",
+    "rollback": "supabase/activation/rollback-ticket-entry.sql",
+    "rollback_sha256": "a67d83a3096d39f8578077835d7bb007c5e3056bd1b76abc54d631143db15d73",
+    "matches_approved_sha256": true,
+    "matches_committed_reviewed_version": true,
+    "applied_by_agent": false,
+    "connector_blocked": true,
+    "connector_error": "MCP error -32001: Unknown tool({\"name\":\"supabase.get_project\"})"
+  },
+  "readiness": {
+    "checked_at": "2026-11-19T00:54:22.840Z",
+    "read_only": true,
+    "variables": {
+      "GOOGLE_SHEETS_SPREADSHEET_ID": true,
+      "GOOGLE_SHEETS_RANGE": true,
+      "GOOGLE_SERVICE_ACCOUNT_EMAIL": false,
+      "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY": false
+    },
+    "name_order": "mixed",
+    "schema": {
+      "ready": false,
+      "code": "PGRST205",
+      "lookup_rpc_ready": false
+    },
+    "sheet": {
+      "ready": false,
+      "code": "configuration_required"
+    },
+    "ready": false
+  },
+  "tests": {
+    "legacy_server": 7,
+    "api_sql_runtime": 92,
+    "scroll_assertions": 7,
+    "production_build": true,
+    "frontend_secrets_scan": true,
+    "actual_pdf_uri_annotation": true
+  },
+  "hosted_migration_applied": false,
+  "secrets_changed": false,
+  "sharing_changed": false,
+  "push": false,
+  "deployment": false
+}

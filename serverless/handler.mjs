@@ -5,7 +5,7 @@ import {getSupabase,requireStaff,serverConfig,bearerToken} from './supabase.mjs'
 import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
 import {OfficialList} from './official-list.mjs';
-import {isTicketToken,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
+import {isLegacyTicket,isTicketReference,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
 import {hashRef} from './repository.mjs';
 const officialList=new OfficialList();
 const ok={ok:true};
@@ -14,7 +14,7 @@ export function createHandler(dependencies){
     let requestRoute;
     try{
       const {route,query}=routeFromRequest(req);requestRoute=route;
-      if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless'});return;}
+      if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless',release:'rsvp-qr-20261119',individual_rsvp:true,qr_links:true});return;}
       const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
       if(!known)throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       if(route==='/api/internal/uploads/cleanup'){
@@ -36,17 +36,18 @@ export function createHandler(dependencies){
       if(route==='/api/tickets/open'){
         requireMethod(req,['GET']);
         const token=query.get('token');
-        if(!isTicketToken(token)){sendTicketPage(req,res,{token:'',secret:deps.rateSecret,invalid:true});return;}
+        if(!isTicketReference(token)){sendTicketPage(req,res,{token:'',secret:deps.rateSecret,invalid:true});return;}
         await rate('ticket-open',120,60);
         sendTicketPage(req,res,{token,secret:deps.rateSecret});return;
       }else if(route==='/api/tickets/verify'){
         requireMethod(req,['POST']);
         const body=await readJson(req);rejectUnknown(body,['token','proof']);
-        if(!isTicketToken(body.token)){result=ticketResult('unknown');}
+        if(!isTicketReference(body.token)){result=ticketResult('unknown');}
         else{
           requireScanProof(req,body,deps.rateSecret);
           await rate('ticket-verify',120,60);await rate('ticket:'+hashRef(body.token),6,60);
-          const guest=await repo.lookupTicket(body.token);
+          const entryToken=isLegacyTicket(body.token)?await repo.resolveLegacyTicket(body.token):body.token;
+          const guest=entryToken?await repo.lookupTicket(entryToken):null;
           if(!guest)result=ticketResult('unknown');
           else if(guest.checked_in_at)result=ticketResult('used',{checked_in_at:guest.checked_in_at});
           else{
@@ -57,7 +58,7 @@ export function createHandler(dependencies){
             else if(match.status==='ambiguous')result=ticketResult('error',{reason:'ambiguous_name'});
             else if(match.status!=='recognized')throw new ApiError(503,'official_list_unavailable','Vérification impossible.');
             else{
-              const entry=await repo.enterTicket(body.token,guest.updated_at,match.name);
+              const entry=await repo.enterTicket(entryToken,guest.updated_at,match.name);
               const state=['valid','used','unknown'].includes(entry.status)?entry.status:'error';
               result=ticketResult(state,{...(entry.checked_in_at?{checked_in_at:entry.checked_in_at}:{}),
                 ...(state==='valid'?{guest_full_name:guest.first_name+' '+guest.last_name}:{})});

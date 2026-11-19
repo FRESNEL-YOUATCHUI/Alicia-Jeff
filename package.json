@@ -7,9 +7,9 @@
     "dev": "node scripts/dev-local.mjs",
     "build": "vite build && node scripts/copy-wedding-assets.mjs",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "node scripts/serve-built.mjs --port 4173",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "start": "node server/index.mjs",
+    "start": "node scripts/serve-built.mjs",
     "test:server": "node --test server/server.test.mjs",
     "dev:legacy": "node scripts/dev-legacy.mjs",
     "dev:vercel": "node scripts/vercel-dev.mjs --listen 3000",
@@ -25,7 +25,8 @@
     "backup:business": "node scripts/backup-business-readonly.mjs",
     "prepare:rollback": "node scripts/prepare-activation-rollback.mjs",
     "test:concurrency": "node scripts/test-ticket-concurrency.mjs",
-    "inspect:tickets": "node scripts/inspect-ticket-readiness.mjs"
+    "inspect:tickets": "node scripts/inspect-ticket-readiness.mjs",
+    "verify:code": "node scripts/verify.mjs --code-only"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

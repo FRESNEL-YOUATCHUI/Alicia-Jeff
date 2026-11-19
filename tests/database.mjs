@@ -15,14 +15,14 @@ export function clientFor(pg){
  return {
   auth:{getUser:async token=>token==='valid'?{data:{user:{id:STAFF}},error:null}:token==='no-role'?{data:{user:{id:'20000000-0000-4000-8000-000000000002'}},error:null}:{data:{user:null},error:{status:401}}},
   from(table){
-   if(table!=='wedding_staff')throw Error('Unexpected table');
+   if(!['wedding_staff','wedding_rsvps'].includes(table))throw Error('Unexpected table');
    return {
     select(){
      return {
       eq(_column,id){
        return {
         async maybeSingle(){
-         try{return{data:(await pg.query('select role from public.wedding_staff where user_id=$1',[id])).rows[0]??null,error:null};}
+         try{return{data:(await pg.query('select '+(table==='wedding_staff'?'role from public.wedding_staff where user_id':'ref_hash from public.wedding_rsvps where id')+'=$1',[id])).rows[0]??null,error:null};}
          catch(error){return{data:null,error};}
         }
        };

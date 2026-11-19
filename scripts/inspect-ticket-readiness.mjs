@@ -1,15 +1,19 @@
 import fs from 'node:fs/promises';
 import {createClient} from '@supabase/supabase-js';
 import {applyLocalEnvironment} from './lib/environment.mjs';
-import {OfficialList} from '../serverless/official-list.mjs';
+import {OfficialList,DEFAULT_SHEET_ID,DEFAULT_SHEET_RANGE} from '../serverless/official-list.mjs';
 applyLocalEnvironment();
 const names=['GOOGLE_SHEETS_SPREADSHEET_ID','GOOGLE_SHEETS_RANGE','GOOGLE_SERVICE_ACCOUNT_EMAIL','GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY'];
-const variables=Object.fromEntries(names.map(name=>[name,Boolean(process.env[name])]));
+const resolved={...process.env,GOOGLE_SHEETS_SPREADSHEET_ID:process.env.GOOGLE_SHEETS_SPREADSHEET_ID||DEFAULT_SHEET_ID,GOOGLE_SHEETS_RANGE:process.env.GOOGLE_SHEETS_RANGE||DEFAULT_SHEET_RANGE};
+const variables=Object.fromEntries(names.map(name=>[name,Boolean(resolved[name])]));
 let schema={ready:false,code:'configuration_required'},sheet={ready:false,code:'configuration_required'};
 if(process.env.SUPABASE_URL&&process.env.SUPABASE_SECRET_KEY){
  const client=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
- const check=await client.from('wedding_ticket_entries').select('rsvp_id').limit(0).abortSignal(AbortSignal.timeout(15000));
- schema={ready:check.status===200&&!check.error,code:check.error?.code||(check.status===200?'ready':'http_'+check.status)};
+ const check=await client.from('wedding_ticket_entries').select('rsvp_id,token,checked_in_at,admitted_name_hash,created_at').limit(0).abortSignal(AbortSignal.timeout(15000));
+ const lookup=check.status===200&&!check.error?await client.rpc('wedding_api_ticket_lookup',{p_token:''}).abortSignal(AbortSignal.timeout(15000)):null;
+ schema={ready:check.status===200&&!check.error&&lookup?.status===200&&!lookup?.error,
+ code:check.error?.code||lookup?.error?.code||(lookup?.status===200?'ready':'schema_required'),
+ lookup_rpc_ready:lookup?.status===200&&!lookup?.error};
 }
 if(Object.values(variables).every(Boolean)){
  try{await new OfficialList().match({first_name:'Healthcheck',last_name:'No-admission-probe'});sheet={ready:true,code:'read_only_access_verified'};}

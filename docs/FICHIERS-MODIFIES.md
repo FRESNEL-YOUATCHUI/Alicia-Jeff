@@ -251,3 +251,7 @@ Audit, tests isolés et sondes réelles refusées uniquement. Aucun secret, Stor
 ## RSVP et contrôle des billets — 18 novembre 2026
 
 La liste exacte des fichiers et les preuves de validation figurent dans [RSVP-QR-FINALISATION.md](RSVP-QR-FINALISATION.md). Les exports privés, classeurs des invités et données de test restent hors Git.
+
+## Correction réelle QR / version de production — 19 novembre 2026
+
+Le [bilan du 19 novembre](CORRECTION-QR-20261119.md) remplace les constats précédents pour cette fonctionnalité et donne la liste des fichiers, la comparaison production/local et les blocages réels. La [procédure Google privée](GOOGLE-SHEETS-LECTURE-PRIVEE.md) indique les deux variables serveur à configurer sans transmettre de clé dans le chat.

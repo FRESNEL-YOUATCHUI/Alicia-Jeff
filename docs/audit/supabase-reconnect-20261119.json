@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-19",
+  "project_id": "mcnpagbcehupdbhshcea",
+  "plugin_available": true,
+  "project_metadata_error": "MCP error -32001: Unknown tool({\"name\":\"supabase.get_project\"})",
+  "readonly_database_error": "MCP error -32001: Unknown tool({\"name\":\"supabase.execute_sql\"})",
+  "database_access_verified": false,
+  "migration_history_verified": false,
+  "migration004_applied": false,
+  "other_project_modified": false,
+  "secrets_modified": false
+}

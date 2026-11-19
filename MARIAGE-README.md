@@ -1,5 +1,7 @@
 # Alicia & Jeff — démarrage et validation
 
+**Mise à jour du 19 novembre :** voir le [diagnostic et les correctifs actuels](docs/CORRECTION-QR-20261119.md). Ce bilan précise la version réellement en ligne et les prérequis encore bloqués.
+
 Le projet se trouve dans `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`. Node.js 22.16.0 est utilisé pour les vérifications.
 
 ## Démarrer

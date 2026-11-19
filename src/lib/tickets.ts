@@ -1,9 +1,10 @@
 import QRCode from 'qrcode';
 import type {Ticket} from './types';
-export function ticketQrValue(ticket:Ticket,origin=window.location.origin){
-  // Existing cards remain downloadable before the separately authorized SQL activation.
-  if(ticket.qr_version!==2)return 'AJ:'+ticket.qr_token;
-  if(!/^[A-Za-z0-9_-]{43}$/.test(ticket.qr_token))throw new Error('Le billet doit être récupéré à nouveau.');
+export function ticketQrValue(ticket:Ticket,origin=import.meta.env?.VITE_PUBLIC_SITE_URL||'https://alicia-jeff.vercel.app'){
+  const modern=/^[A-Za-z0-9_-]{43}$/.test(ticket.qr_token);
+  const legacy=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(ticket.qr_token);
+  if(!modern&&!legacy)throw new Error('Le billet doit être récupéré à nouveau.');
+  // Every newly downloaded card is a real link, including an existing confirmation.
   const base=new URL(origin);
   if(base.protocol!=='https:'&&!(base.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(base.hostname)))throw new Error('Utilisez une adresse sécurisée pour le billet.');
   const url=new URL('/api/tickets/open',base.origin);url.searchParams.set('token',ticket.qr_token);return url.href;
@@ -32,6 +33,7 @@ export async function ticketImage(ticket:Ticket):Promise<string> {
   c.fillStyle='#737868';c.font='21px Arial';c.fillText('15 h · Ambassade du Cameroun au Sénégal   |   19 h · Fun Time, Bourguiba',60,cardHeight+314);
   c.font='20px Arial';c.fillText('Votre présence nous fera un immense plaisir.',60,cardHeight+351);
   const qr=new Image();qr.src=await QRCode.toDataURL(ticketQrValue(ticket),{width:260,margin:3,errorCorrectionLevel:'M'});await qr.decode();c.drawImage(qr,width-320,cardHeight+60,260,260);
+  c.font='18px Arial';c.fillText('Scanner ou cliquer sur le QR',width-330,cardHeight+350);
   return canvas.toDataURL('image/png');
 }
 export async function downloadTicket(ticket:Ticket,format:'png'|'pdf') {
@@ -43,6 +45,9 @@ export async function downloadTicket(ticket:Ticket,format:'png'|'pdf') {
     const scale=Math.min((pageWidth-2*margin)/properties.width,(pageHeight-2*margin)/properties.height);
     const width=properties.width*scale,height=properties.height*scale;
     pdf.addImage(data,'PNG',(pageWidth-width)/2,(pageHeight-height)/2,width,height,undefined,'FAST');
+    pdf.link((pageWidth-width)/2+(properties.width-320)*scale,
+      (pageHeight-height)/2+(properties.height-390+60)*scale,260*scale,260*scale,
+      {url:ticketQrValue(ticket)});
     await pdf.save(`Invitation-${ticket.ticket_number}.pdf`,{returnPromise:true});
   }else{
     const blob=await(await fetch(data)).blob(),url=URL.createObjectURL(blob),a=document.createElement('a');

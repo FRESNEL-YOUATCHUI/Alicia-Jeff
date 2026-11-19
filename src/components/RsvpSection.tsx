@@ -47,7 +47,7 @@ export default function RsvpSection({onMessagePublished}:{onMessagePublished:()=
       <label htmlFor="presence-message">Un petit mot pour les mariés <span>(facultatif)</span><textarea id="presence-message" rows={3} maxLength={2000} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Vos vœux, un souvenir, quelques mots d’amour…"/></label><p className="field-note">Votre prénom et votre petit mot seront visibles dans « Souvenirs · Messages ».</p>
       <label className="honeypot" aria-hidden="true">Site web<input tabIndex={-1} autoComplete="off" value={website} onChange={e=>setWebsite(e.target.value)}/></label>
       <button className="button" disabled={busy}>{busy?<><Loader2 size={15} className="animate-spin"/> Enregistrement…</>:<>Confirmer ma présence <ArrowUpRight size={16}/></>}</button>
-      <p className="field-note">Votre carte sera téléchargée automatiquement après la confirmation.</p>
+      <p className="field-note">Un billet nominatif pour une seule personne. Votre carte sera téléchargée automatiquement après la confirmation.</p>
     </form>}
     {error&&<p className="form-error" role="alert">{error}</p>}
     </div>

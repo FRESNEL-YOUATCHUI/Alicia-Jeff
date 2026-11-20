@@ -1,0 +1,28 @@
+import fs from 'node:fs';import path from 'node:path';import {execFileSync} from 'node:child_process';import {projectRoot} from './lib/environment.mjs';
+import {MIGRATION005_SHA,PROJECT_REF,sha,backupSql,parseBackup,validateBefore,validateAfter,guardedSql} from './lib/migration005.mjs';
+const args=process.argv.slice(2),mode=args[0],option=name=>args[args.indexOf(name)+1];
+function privatePath(file){const p=path.resolve(file),rel=path.relative(projectRoot,p);if(rel.startsWith('..')||path.isAbsolute(rel))throw Error('Private bundle must remain within this project');execFileSync('git',['check-ignore','--quiet','--',p],{cwd:projectRoot,stdio:'ignore'});return p;}
+const dependencies=()=>Object.fromEntries(['001_serverless.sql','002_api_only_access.sql','003_private_storage_access.sql','004_ticket_entry.sql'].map(p=>[p,sha(fs.readFileSync(path.join(projectRoot,'supabase/migrations',p)))]));
+const write=(p,data)=>fs.writeFileSync(p,typeof data==='string'?data:JSON.stringify(data,null,2)+'\n',{flag:'wx',mode:0o600});
+try{
+ const original=fs.readFileSync(path.join(projectRoot,'supabase/migrations/005_draft_uploads.sql'));if(sha(original)!==MIGRATION005_SHA)throw Error('005 hash mismatch; audit required');
+ if(mode==='prepare'){
+  const bundle=privatePath(path.join(projectRoot,'.qa-artifacts','migration005-'+new Date().toISOString().replace(/[:.]/g,'-')));fs.mkdirSync(bundle,{recursive:true,mode:0o700});
+  const backup=path.join(bundle,'backup-readonly.sql'),rollback=path.join(bundle,'rollback-manual.sql');write(backup,backupSql());write(rollback,fs.readFileSync(path.join(projectRoot,'supabase/activation/rollback-draft-uploads.sql'),'utf8'));write(path.join(bundle,'005-original.sql'),original.toString('utf8'));
+  write(path.join(bundle,'manifest.json'),{project_ref:PROJECT_REF,prepared_at:new Date().toISOString(),original_sha256:MIGRATION005_SHA,dependencies:dependencies(),backup_sql_sha256:sha(fs.readFileSync(backup)),rollback_sha256:sha(fs.readFileSync(rollback)),remote_writes:0,authorization_required:true});
+  console.log(JSON.stringify({directory:bundle,backup_sql:backup,expected_before_csv:path.join(bundle,'before.csv'),expected_after_csv:path.join(bundle,'after.csv'),original_sha256:MIGRATION005_SHA,remote_writes:0}));
+ }else if(['before','after'].includes(mode)){
+  if(!args.includes('--bundle')||!args.includes('--snapshot'))throw Error('Usage: before|after --bundle PRIVATE_FOLDER --snapshot EXPORTED_CSV_OR_JSON');
+  const bundle=privatePath(option('--bundle')),manifest=JSON.parse(fs.readFileSync(path.join(bundle,'manifest.json')));if(JSON.stringify(manifest.dependencies)!==JSON.stringify(dependencies()))throw Error('Migration dependency changed since preparation');if(manifest.backup_sql_sha256!==sha(backupSql()))throw Error('Backup template changed: prepare a fresh bundle');if(manifest.project_ref!==PROJECT_REF||manifest.original_sha256!==MIGRATION005_SHA||sha(fs.readFileSync(path.join(bundle,'backup-readonly.sql')))!==manifest.backup_sql_sha256||sha(fs.readFileSync(path.join(bundle,'rollback-manual.sql')))!==manifest.rollback_sha256||sha(fs.readFileSync(path.join(bundle,'005-original.sql')))!==MIGRATION005_SHA)throw Error('Private bundle integrity check failed');
+  const text=fs.readFileSync(option('--snapshot'),'utf8'),snapshot=parseBackup(text);
+  if(mode==='before'){
+   const age=Date.now()-Date.parse(snapshot.captured_at);if(!Number.isFinite(age)||age< -30000||age>30*60000)throw Error('Fresh backup required: maximum age 30 minutes');
+   const result=validateBefore(snapshot,projectRoot);write(path.join(bundle,'before-verified.json'),snapshot);
+   const expires=new Date(Date.parse(snapshot.captured_at)+30*60000).toISOString();let application=guardedSql(original);
+   application=application.replace('do $delivery005$ begin','do $delivery005$ begin\n if clock_timestamp()>\''+expires+'\'::timestamptz then raise exception \'Preflight expired: capture and validate a fresh backup\';end if;');
+   write(path.join(bundle,'apply005-after-approval.sql'),application);write(path.join(bundle,'before-validation.json'),{...result,backup_sha256:sha(text),verified_backup_sha256:sha(fs.readFileSync(path.join(bundle,'before-verified.json'))),application_sha256:sha(application),application_deadline_utc:expires,remote_writes:0});console.log(JSON.stringify({...result,application_sql:path.join(bundle,'apply005-after-approval.sql'),application_deadline_utc:expires,requires_explicit_approval:true,remote_writes:0}));
+  }else{
+   const beforeBytes=fs.readFileSync(path.join(bundle,'before-verified.json')),verified=JSON.parse(fs.readFileSync(path.join(bundle,'before-validation.json')));if(sha(beforeBytes)!==verified.verified_backup_sha256||sha(fs.readFileSync(path.join(bundle,'apply005-after-approval.sql')))!==verified.application_sha256)throw Error('Verified backup or application file changed');const before=parseBackup(beforeBytes.toString('utf8'));if(Date.parse(snapshot.captured_at)<Date.parse(before.captured_at)||!Number.isFinite(Date.parse(snapshot.captured_at)))throw Error('After snapshot predates before snapshot');const result=validateAfter(before,snapshot,projectRoot);write(path.join(bundle,'after-verified.json'),snapshot);write(path.join(bundle,'after-validation.json'),{...result,backup_sha256:sha(text),remote_writes:0});console.log(JSON.stringify(result));if(!result.ready)process.exitCode=2;
+  }
+ }else throw Error('Usage: node scripts/prepare-migration005.mjs prepare | before|after --bundle PRIVATE_FOLDER --snapshot FILE');
+}catch(error){console.error('005 preparation stopped: '+(error instanceof SyntaxError||error.code?'Private bundle or export unreadable; contents omitted.':error.message));process.exitCode=1;}

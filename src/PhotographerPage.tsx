@@ -1,0 +1,2 @@
+import PhotographerPanel from './components/PhotographerPanel';
+export default function PhotographerPage(){return <div className="photographer-page"><a className="skip-link" href="#photographer-main">Aller au tableau de bord</a><header className="photographer-page-header"><a href="/">Alicia & Jeff</a><a href="/#souvenirs">Retour aux souvenirs</a></header><main id="photographer-main"><h1>Les souvenirs du grand jour</h1><PhotographerPanel/></main><footer>18 décembre 2026 · Dakar · Espace de publication privé</footer></div>;}

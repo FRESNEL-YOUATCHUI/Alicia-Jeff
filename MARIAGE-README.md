@@ -1,68 +1,55 @@
-# Alicia & Jeff — démarrage et validation
+# Alicia & Jeff — livraison et validation du 20 novembre 2026
 
-**Mise à jour du 19 novembre :** voir le [diagnostic et les correctifs actuels](docs/CORRECTION-QR-20261119.md). Ce bilan précise la version réellement en ligne et les prérequis encore bloqués.
+## Démarrage
 
-Le projet se trouve dans `C:\Users\Hp EliteBook\Downloads\alicia-jeff-site-local-v3`. Node.js 22.16.0 est utilisé pour les vérifications.
-
-## Démarrer
-
-Depuis ce dossier :
+Node.js 22, dépendances npm installées. Depuis le dossier alicia-jeff-site-local-v3 :
 
 ```powershell
 npm run dev
-```
-
-Ouvrir **http://127.0.0.1:3000/**. Une seule application Node lance Vite en middleware et les **vrais handlers de `api/gateway.mjs`**. Aucun serveur factice ni stockage JSON historique n’est utilisé pour remplacer Supabase. Un seul port HTTP est nécessaire ; Ctrl+C ferme le serveur et Vite. Si 3000 est déjà occupé, le lancement échoue clairement sans arrêter l’autre programme.
-
-La configuration locale existante `.env.local` est chargée depuis le dossier du projet, sans affichage ni modification de ses secrets. La page reste sur une seule page ; enveloppe, musique, animations, photos et responsive sont conservés.
-
-**État après activation :** les vingt fonctions SQL sont présentes, les contrôles de droits/RLS sont positifs et les six empreintes métier sont conservées. Les lectures publiques et administratives côté serveur sont opérationnelles ; `/api/souvenirs` répond 200. Les écritures réelles et la connexion interactive du photographe restent à valider dans le navigateur. Le mode local utilise votre vraie base : les confirmations et messages valides y sont enregistrés.
-
-## Vérifier et compiler
-
-```powershell
-npm run verify
+# Contrôles automatisés :
+npm run verify:delivery
+# Build seul :
 npm run build
 ```
 
-`verify` exécute diagnostic, TypeScript, lint, tests, build, contrôle des secrets puis vérification HTTP et Supabase réelle en lecture seule. Il s’arrête à la première erreur avec un code non nul. Le dernier passage complet après activation réussit avec le code 0 ; la preuve runtime est dans `docs/audit/local-runtime.json`.
+L’invitation est sur http://127.0.0.1:3000/. Le tableau de bord est sur /photographe.
+Le même gateway Vercel et les mêmes contrôles serveur sont utilisés en local. .env.local n’est pas modifié ni affiché.
+Attention : npm run dev utilise le vrai Supabase configuré. Les soumissions valides y sont enregistrées.
+Pour les tests sans effet sur la production, utiliser npm run test:browser après le build : API et SQL réels sur PGlite,
+avec Auth, Storage et Sheets simulés. Le navigateur Edge installé est utilisé en mode headless ; aucune donnée de production n’est envoyée.
+Sur une machine équipée de Chrome, WEDDING_BROWSER_CHANNEL=chrome peut être utilisé pour le test navigateur.
 
-Le rapport structuré A–F, la liste des changements, les résultats et la checklist figurent dans **[docs/RAPPORT-POST-ACTIVATION.md](docs/RAPPORT-POST-ACTIVATION.md)**. Le diagnostic historique reste dans `docs/DIAGNOSTIC-VALIDATION.md`.
+## État de livraison
 
-## Vercel et différences locales
+Le bilan actuel est docs/RAPPORT-FINAL.md et sa preuve structurée docs/audit/finalisation-20261120.json.
+Les autres rapports datés sont historiques. La connexion Google réelle n’est PAS déclarée validée tant que
+le diagnostic de lecture Production n’a pas renvoyé succès après votre déploiement.
 
-Le mode optionnel `npm run dev:vercel` est corrigé et a passé les contrôles HTTP. Il utilise l’entrée JavaScript livrée avec le CLI installé sous Windows, retire les drapeaux natifs incompatibles et transmet le chemin absolu de Node. Vite doit écouter le port fourni par Vercel, qui peut être 3000 ; forcer 5174 ne respecte pas ce contrat.
+La migration 004 est déjà appliquée. Ne pas la rejouer. La migration 005_draft_uploads.sql est préparée localement,
+non exécutée à distance, et exige un accord explicite. Elle ajoute deux fonctions service-only pour finaliser
+les nouveaux imports avec hidden=true, sans modifier les anciennes fonctions ou les photos existantes.
+Tant que 005 est absente, le nouveau backend refuse les imports plutôt que de rendre une photo publique prématurément.
+Appliquer 005 après autorisation AVANT de déployer ce nouveau parcours. Le rollback dédié conserve toutes les données.
 
-Le mode `npm run dev` utilise les API publiques de Node et Vite et n’a pas besoin du cache des builders Vercel. Il partage le gateway, la validation, les contrôles d’authentification et les appels Supabase avec la production. Il ne reproduit pas la sandbox, les limites de durée, l’ordonnanceur ou les en-têtes de l’infrastructure Vercel ; le routage gateway est également testé en HTTP. Les photos sont toujours envoyées directement vers le Storage privé via une autorisation signée.
+## Photographe
 
-L’ancien backend reste conservé, ainsi que ses données et sa configuration privées. `npm start` / `npm run dev:legacy` correspondent à ce backend historique indépendant, pas au runtime recommandé.
+Le lien Espace photographe ouvre une page dédiée. Session et rôle sont vérifiés par Supabase Auth côté serveur.
+Choisir un album, sélectionner des fichiers, contrôler les aperçus, puis Importer. Les nouveaux fichiers restent en brouillon.
+Sélectionner les brouillons puis Publier les photos. Albums et galerie conservent leurs contrôles de visibilité et la date existante.
+Le bouton Autoriser la galerie ne contourne pas la date de disponibilité. Les URL signées déjà émises restent valables au plus dix minutes.
 
-## Activation effectuée par le propriétaire
+## Propriétaire et Google
 
-`supabase/activation/activate-serverless.sql` regroupe 001 et 002 dans une seule transaction. Il ajoute les RPC et la coordination, ajuste les droits métier et préserve les tables/albums et leurs identifiants. Le propriétaire a exécuté ce fichier dans SQL Editor après autorisation finale et fourni la vérification SQL positive. La proposition Storage 003 est facultative, exclue de ce fichier et n’a pas été exécutée. Aucun SQL hébergé n’est exécuté automatiquement par les commandes de démarrage ou vérification.
+Aucune promotion automatique du photographe en admin. Le mécanisme à durée courte et scope unique est décrit dans
+[le guide Google](docs/GOOGLE-SHEETS-LECTURE-PRIVEE.md). npm run owner:grant -- --user-id UUID produit un fichier
+privé ignoré par Git ; il ne faut l’exécuter que juste avant le contrôle Production, après déploiement.
+La page photographe permet de charger ce fichier sans afficher le jeton.
 
-Aucun push GitHub et aucun déploiement Vercel n’ont été effectués.
+## Déploiement réservé au propriétaire
 
-## Audit préalable à l’activation Supabase
+Aucun commit, push ou déploiement n’est effectué automatiquement. Un push sur la branche de production peut déclencher
+Vercel via l’intégration Git. Regrouper l’approbation SQL 005, son contrôle, votre déploiement et la validation réelle
+Google/Auth/Storage selon la liste unique du rapport final. Aucun secret ne doit être copié dans le chat ou Git.
 
-L’audit SQL complémentaire et ses réserves sont dans [docs/AUDIT-ACTIVATION-SUPABASE.md](docs/AUDIT-ACTIVATION-SUPABASE.md). La capture SQL transactionnelle réelle et le rollback correspondant sont conservés dans `.qa-artifacts/backups/`, avec une archive REST supplémentaire. Les fichiers privés restent hors Git. Voir le rapport après activation pour l’état courant.
-
-`npm run audit:activation` exécute uniquement les tests PostgreSQL isolés. Le fichier `supabase/activation/rollback-serverless.sql` est un garde-fou : le vrai rollback doit être généré à partir de l’instantané complet avec `npm run prepare:rollback -- <snapshot.json>`, puis revu avant toute exécution autorisée.
-
-La procédure pas à pas pour la session Supabase déjà connectée est dans [docs/PROCEDURE-SUPABASE-SQL-EDITOR.md](docs/PROCEDURE-SUPABASE-SQL-EDITOR.md). Elle distingue la capture préalable en lecture seule, l’arrêt pour analyse/accord final, l’activation et son contrôle en lecture seule. Aucun changement de `.env.local` n’est requis.
-
-La capture SQL réelle est maintenant reçue et validée ; le rollback privé et la répétition adaptée sont documentés dans [docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md](docs/VALIDATION-CAPTURE-AVANT-ACTIVATION.md). L’activation autorisée a depuis été effectuée ; le bilan courant est `docs/RAPPORT-POST-ACTIVATION.md`.
-
-## Dernières validations avant votre déploiement
-
-Tester dans le navigateur une confirmation/billet, un message et la connexion/opérations photographe avec vos propres comptes, sans partager d’identifiants. Les validations d’écriture automatisées utilisent uniquement les bases isolées.
-
-Prévoir les quatre variables Supabase dans les environnements Vercel nécessaires, plus `CRON_SECRET` (au moins 32 caractères) pour le nettoyage quotidien. Ce secret n’est pas configuré localement. Le bucket reste privé avec limites MIME/taille non définies ; leur éventuel durcissement nécessite une autorisation Storage distincte. Aucun secret n’a été modifié ici.
-
-## Audit pré-déploiement final
-
-Le rapport courant est [docs/AUDIT-PREDEPLOIEMENT.md](docs/AUDIT-PREDEPLOIEMENT.md) : vérification globale réussie, protection du cron testée et proposition privée JPEG/PNG/WebP à 20 Mio dans `docs/storage-ingestion-proposal.json`. Les limites ne sont pas appliquées ; aucun secret ni déploiement n’est modifié. CRON_SECRET est absent localement et sa présence en Production reste à vérifier ; le cron refuse l’exécution tant que sa configuration manque.
-
-## RSVP et entrée QR — 18 novembre 2026
-
-Le RSVP individuel lance le téléchargement du billet. Le [bilan RSVP/QR](docs/RSVP-QR-FINALISATION.md) présente le code, les tests et la feuille privée. La migration 004 et l'accès privé Google du backend nécessitent encore votre intervention autorisée. Aucun SQL hébergé, secret, push ou déploiement n'a été modifié. La commande de préparation en lecture seule est : npm run inspect:tickets.
+npm start et npm run preview servent le build et le vrai backend Supabase. Le backend historique est accessible uniquement
+par npm run dev:legacy et reste conservé. Les données historiques, sauvegardes et résultats privés restent ignorés.

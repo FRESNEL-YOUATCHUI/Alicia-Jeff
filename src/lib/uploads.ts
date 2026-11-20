@@ -1,5 +1,5 @@
 import {api,ApiFailure} from './api';
-export interface UploadJob{file:File;reference:string;album:string;intent?:string;done?:boolean}
+export interface UploadJob{file:File;reference:string;album:string;intent?:string;done?:boolean;photoId?:string}
 interface Authorization{id:string;status:string;photo_id?:string;bucket?:string;path?:string;token?:string}
 const wait=(ms:number,signal:AbortSignal)=>new Promise<void>((resolve,reject)=>{
   if(signal.aborted){reject(new DOMException('Import annulé.','AbortError'));return;}
@@ -19,10 +19,10 @@ export async function uploadPhoto(job:UploadJob,signal:AbortSignal){
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size<1||file.size>20*1024*1024)throw new Error('Chaque image doit être un JPEG, PNG ou WebP de 20 Mo maximum.');
   const authorization=await retry(()=>api<Authorization>('/api/admin/uploads/authorize',{method:'POST',signal,body:JSON.stringify({album_id:job.album,client_ref:job.reference,filename:file.name,content_type:file.type,size:file.size})}),signal);
   job.intent=authorization.id;
-  if(authorization.status==='complete'){job.done=true;return;}
-  const finalize=()=>api('/api/admin/uploads/'+authorization.id+'/finalize',{method:'POST',body:'{}',signal});
+  if(authorization.status==='complete'){job.photoId=authorization.photo_id;job.done=true;return;}
+  const finalize=()=>api<{photo_id:string}>('/api/admin/uploads/'+authorization.id+'/finalize',{method:'POST',body:'{}',signal});
   // A prior interrupted request may already have stored/finalized this exact intent.
-  try{await finalize();job.done=true;return;}catch(error){if(!(error instanceof ApiFailure)||error.code!=='upload_incomplete')throw error;}
+  try{const result=await finalize();job.photoId=result.photo_id;job.done=true;return;}catch(error){if(!(error instanceof ApiFailure)||error.code!=='upload_incomplete')throw error;}
   if(!authorization.bucket||!authorization.path||!authorization.token)throw new Error('Autorisation d’import incomplète.');
   const url=new URL(import.meta.env.VITE_SUPABASE_URL+'/storage/v1/object/upload/sign/'+authorization.bucket+'/'+authorization.path.split('/').map(encodeURIComponent).join('/'));
   url.searchParams.set('token',authorization.token);
@@ -32,7 +32,7 @@ export async function uploadPhoto(job:UploadJob,signal:AbortSignal){
     if(!response.ok)transferError=new Error('Le transfert a été interrompu. Réessayez les imports restants.');
   }catch(error){if(signal.aborted)throw error;transferError=new Error('Le transfert a été interrompu. Réessayez les imports restants.');}
   // A duplicate object or a lost response is resolved by idempotent finalization.
-  try{await retry(finalize,signal);}catch(error){throw transferError??error;}
+  try{const result=await retry(finalize,signal);job.photoId=result.photo_id;}catch(error){throw transferError??error;}
   job.done=true;
 }
 export async function uploadBatch(jobs:UploadJob[],signal:AbortSignal,onProgress:(done:number,total:number)=>void){

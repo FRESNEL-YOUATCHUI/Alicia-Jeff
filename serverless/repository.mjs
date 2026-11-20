@@ -51,9 +51,12 @@ export class Repository {
   adminPhotos(album,page){return this.rpc('admin_photos',{p_album:album,p_offset:page});}
   adminMessages(page){return this.rpc('admin_messages',{p_offset:page});}
   mutate(kind,id,patch,staff){return this.rpc('mutate',{p_kind:kind,p_id:id,p_patch:patch,p_staff:staff.id});}
-  reserve(input,staff){return this.rpc('upload_reserve',{p_input:input,p_staff:staff.id});}
+  async draftUploadsReady(){try{return await this.rpc('upload_draft_ready')===true;}catch(error){if(error instanceof ApiError&&error.code==='schema_required')return false;throw error;}}
+  async reserve(input,staff){
+    if(!await this.draftUploadsReady())throw new ApiError(503,'draft_uploads_required','L’import sécurisé attend l’activation des brouillons.');
+    return this.rpc('upload_reserve',{p_input:input,p_staff:staff.id});}
   claim(id,staff){return this.rpc('upload_claim',{p_id:id,p_staff:staff.id});}
-  complete(id,nonce,staff){return this.rpc('upload_complete',{p_id:id,p_nonce:nonce,p_staff:staff.id});}
+  complete(id,nonce,staff){return this.rpc('upload_complete_draft',{p_id:id,p_nonce:nonce,p_staff:staff.id});}
   release(id,nonce,staff){return this.rpc('upload_release',{p_id:id,p_nonce:nonce,p_staff:staff.id});}
   cancel(id,staff){return this.rpc('upload_cancel',{p_id:id,p_staff:staff.id});}
   cleanup(){return this.rpc('cleanup_claim');}

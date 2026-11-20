@@ -13,6 +13,14 @@
     {
       "source": "/api/:path*",
       "destination": "/api/gateway?__wedding_route=:path"
+    },
+    {
+      "source": "/photographe",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/photographe/",
+      "destination": "/index.html"
     }
   ],
   "headers": [

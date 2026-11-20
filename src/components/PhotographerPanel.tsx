@@ -4,84 +4,52 @@ import {api,ApiFailure} from '../lib/api';
 import {getSupabase} from '../lib/supabase';
 import {cancelUploads,uploadBatch,type UploadJob} from '../lib/uploads';
 import {loginPhotographer,logoutPhotographer,getPhotographerSession} from '../lib/photographerAuth';
+import OwnerDiagnostics from './OwnerDiagnostics';
 interface AdminPhoto{id:string;caption:string;url:string;hidden:boolean}
 interface AdminAlbum{id:string;title:string;published:boolean;hidden:boolean;photos:AdminPhoto[];has_more:boolean}
-interface AdminState{albums:AdminAlbum[];settings:{galleryPublished:boolean};messages:{id:string;author:string;body:string;hidden:boolean}[];response_count:number;messages_has_more:boolean}
-export default function PhotographerPanel({onChanged}:{onChanged:()=>void}){
-  const [state,setState]=useState<AdminState|null>(null),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
-  const [authenticated,setAuthenticated]=useState(false),[checkingSession,setCheckingSession]=useState(true);
-  const [title,setTitle]=useState(''),[album,setAlbum]=useState('');
-  const jobs=useRef<UploadJob[]>([]),controller=useRef<AbortController|null>(null);
-  const [pending,setPending]=useState(false),[uploading,setUploading]=useState(false);
-  const refresh=useCallback(async()=>{setState(await api<AdminState>('/api/admin/state'));onChanged();},[onChanged]);
-  useEffect(()=>{
-    let active=true;
-    void getPhotographerSession().then(user=>{if(active)setAuthenticated(Boolean(user));}).catch(e=>{if(active)setError((e as Error).message);}).finally(()=>{if(active)setCheckingSession(false);});
-    let unsubscribe=()=>{};
-    try{const {data}=getSupabase().auth.onAuthStateChange((_event,session)=>{if(active&&!session){setAuthenticated(false);setState(null);controller.current?.abort();}});unsubscribe=()=>data.subscription.unsubscribe();}catch{/* Public invitation remains usable without Auth config. */}
-    return()=>{active=false;unsubscribe();controller.current?.abort();};
-  },[]);
-  useEffect(()=>{
-    if(!authenticated)return;
-    let active=true;
-    const load=()=>refresh().catch(e=>{if(active){setError((e as Error).message);if(e instanceof ApiFailure&&[401,403].includes(e.status)){setState(null);setAuthenticated(false);}}});
-    void load();const timer=setInterval(load,8*60_000);
-    return()=>{active=false;clearInterval(timer);};
-  },[authenticated,refresh]);
-  async function handleLogin(e:React.FormEvent<HTMLFormElement>){
-    e.preventDefault();
-    await action(async()=>{
-      await loginPhotographer(email.trim(),password);
-      setPassword('');
-      setAuthenticated(true);
-      setNotice('Connexion réussie. Chargement des albums…');
-    });
-  }
-  async function handleLogout(){
-    await action(async()=>{
-      controller.current?.abort();jobs.current=[];setPending(false);
-      await logoutPhotographer();
-      setAuthenticated(false);
-      setState(null);
-      setEmail('');
-    });
-  }
-  async function action(fn:()=>Promise<void>){setBusy(true);setError('');setNotice('');try{await fn();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
-  const patch=(url:string,body:unknown)=>action(async()=>{await api(url,{method:'PATCH',body:JSON.stringify(body)});await refresh();});
-  async function upload(files?:File[]){
-    if(files){jobs.current=files.map(file=>({file,album,reference:crypto.randomUUID()}));}
-    setUploading(true);controller.current=new AbortController();
-    await action(async()=>{
-      try{
-        if(!album)throw new Error('Choisissez d’abord un album.');
-        await uploadBatch(jobs.current,controller.current!.signal,(done,total)=>setNotice(done+' / '+total+' photographies importées.'));
-        setPending(false);await refresh();setNotice('Les photographies ont été enregistrées.');jobs.current=[];
-      }finally{setPending(jobs.current.some(j=>!j.done));}
-    });
-    controller.current=null;setUploading(false);
-  }
-  async function cancel(){
-    controller.current?.abort();
-    await cancelUploads(jobs.current);jobs.current=[];setPending(false);setNotice('Import arrêté. Les fichiers incomplets seront nettoyés après expiration de leur autorisation.');
-  }
-  async function morePhotos(a:AdminAlbum){
-    await action(async()=>{const page=await api<{photos:AdminPhoto[];has_more:boolean}>('/api/admin/albums/'+a.id+'/photos?offset='+a.photos.length);setState(previous=>previous?{...previous,albums:previous.albums.map(item=>item.id===a.id?{...item,photos:[...item.photos,...page.photos],has_more:page.has_more}:item)}:previous);});
-  }
-  async function moreMessages(){
-    if(!state)return;
-    await action(async()=>{const page=await api<{messages:AdminState['messages'];has_more:boolean}>('/api/admin/messages?offset='+state.messages.length);setState(previous=>previous?{...previous,messages:[...previous.messages,...page.messages],messages_has_more:page.has_more}:previous);});
-  }
-  return <div className="photographer-panel"><span className="eyebrow">ESPACE PHOTOGRAPHE</span><h3>Les instants à partager.</h3>
-    {checkingSession?<p role="status">Vérification de la session…</p>:
-    !authenticated?<form onSubmit={handleLogin}><p>Connectez-vous pour importer et publier les albums.</p><label htmlFor="photographer-email">Adresse e-mail<input id="photographer-email" type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label htmlFor="photographer-password">Mot de passe<input id="photographer-password" type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="button" disabled={busy}>{busy?<Loader2 size={15} className="animate-spin"/>:<Camera size={15}/>} Se connecter</button></form>:
-    !state?<div><p>Chargement de vos albums et photographies…</p><button type="button" className="text-link" disabled={busy} onClick={()=>void action(refresh)}>Réessayer le chargement</button> <button type="button" className="text-link" disabled={busy} onClick={()=>void handleLogout()}><LogOut size={14}/> Déconnexion</button></div>:
-    <><div className="photographer-toolbar"><span>{state.response_count} confirmation{state.response_count>1?'s':''} reçue{state.response_count>1?'s':''}</span><button className="text-link" onClick={()=>void handleLogout()}><LogOut size={14}/> Déconnexion</button></div>
-      <form className="album-create" onSubmit={e=>{e.preventDefault();action(async()=>{const a=await api<AdminAlbum>('/api/admin/albums',{method:'POST',body:JSON.stringify({title})});setTitle('');setAlbum(a.id);await refresh();});}}><label htmlFor="album-title">Créer un album<input id="album-title" required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)} placeholder="La cérémonie, les mariés, la soirée…"/></label><button className="button" disabled={busy}><Plus size={15}/> Créer</button></form>
-      <div className="upload-photos"><label htmlFor="upload-album">Album à alimenter<select id="upload-album" value={album} onChange={e=>setAlbum(e.target.value)}><option value="">Choisir un album</option>{state.albums.filter(a=>!a.hidden).map(a=><option key={a.id} value={a.id}>{a.title}</option>)}</select></label><label className={`file-button ${busy||!album?'disabled':''}`}><Upload size={16}/> Importer des photographies<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy||!album} onChange={e=>{if(e.target.files)upload(Array.from(e.target.files));e.target.value='';}}/></label><p className="field-note">Import multiple · JPEG, PNG ou WebP · 20 Mo par fichier.</p>{uploading&&<button className="text-link" onClick={()=>void cancel()}>Arrêter les imports</button>}{pending&&!busy&&<button className="text-link" onClick={()=>void upload()}>Réessayer les imports restants</button>}<button className="text-link" disabled={busy} onClick={()=>void action(async()=>{const result=await api<{cleaned:number}>("/api/admin/uploads/cleanup",{method:"POST",body:"{}"});setNotice(result.cleaned+" import(s) expiré(s) nettoyé(s).");})}>Nettoyer les imports interrompus</button></div>
-      <div className="publication-control"><p>Publiez vos albums après la cérémonie. La galerie sera accessible dès votre autorisation, le jour du mariage.</p><button className="button button-outline" disabled={busy} onClick={()=>patch('/api/admin/settings',{galleryPublished:!state.settings.galleryPublished})}>{state.settings.galleryPublished?'Suspendre la galerie publique':'Autoriser la galerie après le mariage'}</button></div>
-      {state.albums.map(a=><div className="managed-album" key={a.id}><div className="photographer-toolbar"><input aria-label={`Renommer l’album ${a.title}`} defaultValue={a.title} maxLength={120} onBlur={e=>{const title=e.target.value.trim();if(title&&title!==a.title)patch(`/api/admin/albums/${a.id}`,{title});}}/><span>{a.photos.filter(p=>!p.hidden).length} images</span><button className="text-link" disabled={busy} onClick={()=>patch(`/api/admin/albums/${a.id}`,{published:!a.published})}>{a.published?'Dépublier':'Publier'}</button><button className="text-link" disabled={busy} onClick={()=>patch(`/api/admin/albums/${a.id}`,{hidden:!a.hidden})}>{a.hidden?'Restaurer l’album':'Archiver l’album'}</button></div><div className="admin-photo-grid">{a.photos.map(p=><div key={p.id} className={p.hidden?'photo-hidden':''}><img src={p.url} alt={p.caption} loading="lazy"/><button className="text-link" disabled={busy} onClick={()=>patch(`/api/admin/photos/${p.id}`,{hidden:!p.hidden})}>{p.hidden?'Restaurer':'Masquer'}</button></div>)}</div>{a.has_more&&<button className="text-link" disabled={busy} onClick={()=>void morePhotos(a)}>Voir les photographies suivantes</button>}</div>)}
-      <details className="moderate-messages"><summary>Gérer les messages du livre d’or</summary>{state.messages.map(m=><div key={m.id}><strong>{m.author}</strong><p>{m.body}</p><button className="text-link" disabled={busy} onClick={()=>patch(`/api/admin/messages/${m.id}`,{hidden:!m.hidden})}>{m.hidden?'Réafficher ce message':'Masquer ce message'}</button></div>)}{state.messages_has_more&&<button className="text-link" disabled={busy} onClick={()=>void moreMessages()}>Voir les messages suivants</button>}</details>
-    </>}
-    {notice&&<p className="message-sent" role="status">{notice}</p>}{error&&<p className="form-error" role="alert">{error}</p>}
-  </div>;
+interface AdminState{albums:AdminAlbum[];draft_uploads_ready:boolean;settings:{galleryPublished:boolean};messages:{id:string;author:string;body:string;hidden:boolean}[];response_count:number;messages_has_more:boolean}
+interface Staged{file:File;url:string}
+const noop=()=>{};
+export default function PhotographerPanel({onChanged=noop}:{onChanged?:()=>void}){
+ const [state,setState]=useState<AdminState|null>(null),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const [authenticated,setAuthenticated]=useState(false),[checking,setChecking]=useState(true),[title,setTitle]=useState(''),[album,setAlbum]=useState('');
+ const [staged,setStaged]=useState<Staged[]>([]),[selected,setSelected]=useState<Set<string>>(new Set()),[pending,setPending]=useState(false),[uploading,setUploading]=useState(false);
+ const recent=useRef(new Map<string,{album:string;url:string;name:string}>());
+ const jobs=useRef<UploadJob[]>([]),controller=useRef<AbortController|null>(null),working=useRef(false),previews=useRef<string[]>([]);
+ const refresh=useCallback(async()=>{const data=await api<AdminState>('/api/admin/state');setState(data);onChanged();return data;},[onChanged]);
+ const clearStaged=()=>{previews.current.forEach(URL.revokeObjectURL);previews.current=[];setStaged([]);};
+ useEffect(()=>{const recentPreviews=recent.current;let active=true;void getPhotographerSession().then(user=>{if(active)setAuthenticated(Boolean(user));}).catch(()=>{if(active)setError('La session ne peut pas être vérifiée. Réessayez.');}).finally(()=>{if(active)setChecking(false);});let unsubscribe=noop;
+  try{const {data}=getSupabase().auth.onAuthStateChange((_event,session)=>{if(active&&!session){setAuthenticated(false);setState(null);controller.current?.abort();}});unsubscribe=()=>data.subscription.unsubscribe();}catch{/* Error is shown by the session check. */}
+  return()=>{active=false;unsubscribe();controller.current?.abort();previews.current.forEach(URL.revokeObjectURL);recentPreviews.forEach(p=>URL.revokeObjectURL(p.url));};},[]);
+ useEffect(()=>{if(!authenticated)return;let active=true;const load=()=>refresh().catch(e=>{if(active){setError((e as Error).message);if(e instanceof ApiFailure&&[401,403].includes(e.status)){setAuthenticated(false);setState(null);}}});void load();const timer=setInterval(load,8*60_000);return()=>{active=false;clearInterval(timer);};},[authenticated,refresh]);
+ async function action(fn:()=>Promise<unknown>){if(working.current)return;working.current=true;setBusy(true);setError('');setNotice('');try{await fn();}catch(e){setError((e as Error).message);}finally{working.current=false;setBusy(false);}}
+ async function login(e:React.FormEvent){e.preventDefault();await action(async()=>{await loginPhotographer(email.trim(),password);setPassword('');setAuthenticated(true);setNotice('Connexion réussie.');});}
+ async function logout(){await action(async()=>{controller.current?.abort();await logoutPhotographer();jobs.current=[];setPending(false);clearStaged();setSelected(new Set());setAuthenticated(false);setState(null);setEmail('');});}
+ const patch=(url:string,body:unknown)=>action(async()=>{await api(url,{method:'PATCH',body:JSON.stringify(body)});await refresh();setNotice('Modification enregistrée.');});
+ function stage(files:File[]){setError('');if(files.length>100||files.reduce((n,f)=>n+f.size,0)>200*1024*1024||files.some(f=>!['image/jpeg','image/png','image/webp'].includes(f.type)||f.size<1||f.size>20*1024*1024)){setError('Choisissez au maximum 100 images JPEG, PNG ou WebP, 20 Mo par image et 200 Mo par lot.');return;}clearStaged();const next=files.map(file=>({file,url:URL.createObjectURL(file)}));previews.current=next.map(p=>p.url);setStaged(next);}
+ async function upload(){if(working.current)return;if(!pending)jobs.current=staged.map(p=>({file:p.file,album,reference:crypto.randomUUID()}));if(!jobs.current.length)return;setUploading(true);controller.current=new AbortController();
+  await action(async()=>{try{if(!album||!state?.draft_uploads_ready)throw Error('L’import attend l’activation sécurisée des brouillons.');await uploadBatch(jobs.current,controller.current!.signal,(done,total)=>setNotice(done+' / '+total+' photographies importées.'));setNotice('Import terminé. Les photographies sont privées jusqu’à leur publication explicite.');}finally{const data=await refresh();const loaded=new Set(data.albums.flatMap(a=>a.photos.map(p=>p.id)));const finished=jobs.current.filter(j=>j.done&&j.photoId);for(const job of finished){if(!loaded.has(job.photoId!)&&!recent.current.has(job.photoId!))recent.current.set(job.photoId!,{album:job.album,url:'',name:job.file.name});}const ids=new Set(finished.map(j=>j.photoId!));setSelected(ids);void data;const incomplete=jobs.current.some(j=>!j.done);setPending(incomplete);if(!incomplete){jobs.current=[];clearStaged();}}});controller.current=null;setUploading(false);
+ }
+ async function stop(){controller.current?.abort();await cancelUploads(jobs.current);setPending(jobs.current.some(j=>!j.done));setNotice('Import interrompu. Vous pouvez réessayer les fichiers restants.');}
+ async function discard(){await action(async()=>{await cancelUploads(jobs.current);jobs.current=[];setPending(false);clearStaged();setNotice('Sélection retirée. Les brouillons déjà importés sont conservés.');});}
+ async function publish(){await action(async()=>{if(!state||!selected.size)return;const failed=new Set<string>();let count=0;
+  for(const a of state.albums){if(a.hidden)continue;const ids=[...new Set([...a.photos.filter(p=>p.hidden&&selected.has(p.id)).map(p=>p.id),...[...recent.current].filter(([id,p])=>p.album===a.id&&selected.has(id)).map(([id])=>id)])];if(!ids.length)continue;for(const id of ids)try{await api('/api/admin/photos/'+id,{method:'PATCH',body:JSON.stringify({hidden:false})});count++;}catch{failed.add(id);}if(!a.published&&ids.some(id=>!failed.has(id)))await api('/api/admin/albums/'+a.id,{method:'PATCH',body:JSON.stringify({published:true})});}
+  for(const id of selected)if(!failed.has(id)){const preview=recent.current.get(id);if(preview)URL.revokeObjectURL(preview.url);recent.current.delete(id);}setSelected(failed);await refresh();setNotice(count+' photographie(s) publiée(s). La visibilité publique dépend de l’ouverture de la galerie.');if(failed.size)throw Error('Certaines publications ont échoué. Les photographies restantes sont toujours sélectionnées.');});}
+ async function morePhotos(a:AdminAlbum){await action(async()=>{const page=await api<{photos:AdminPhoto[];has_more:boolean}>('/api/admin/albums/'+a.id+'/photos?offset='+a.photos.length);setState(previous=>previous?{...previous,albums:previous.albums.map(item=>item.id===a.id?{...item,photos:[...item.photos,...page.photos],has_more:page.has_more}:item)}:previous);});}
+ async function moreMessages(){if(!state)return;await action(async()=>{const page=await api<{messages:AdminState['messages'];has_more:boolean}>('/api/admin/messages?offset='+state.messages.length);setState(previous=>previous?{...previous,messages:[...previous.messages,...page.messages],messages_has_more:page.has_more}:previous);});}
+ const drafts=state?.albums.flatMap(a=>a.hidden?[]:a.photos.filter(p=>p.hidden))??[];
+ return <div className="photographer-panel"><span className="eyebrow">ESPACE PHOTOGRAPHE</span><h2>Les instants à partager.</h2>
+ {checking?<p role="status">Vérification de la session…</p>:!authenticated?<form onSubmit={login}><p>Connectez-vous pour importer et publier les albums.</p><label htmlFor="photographer-email">Adresse e-mail<input id="photographer-email" type="email" required autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)}/></label><label htmlFor="photographer-password">Mot de passe<input id="photographer-password" type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label><button className="button" disabled={busy}>{busy?<Loader2 size={15} className="animate-spin"/>:<Camera size={15}/>} Se connecter</button></form>:!state?<div><p role="status">Chargement des albums…</p><button type="button" className="text-link" disabled={busy} onClick={()=>void action(refresh)}>Réessayer le chargement</button><button type="button" className="text-link" disabled={busy} onClick={()=>void logout()}>Déconnexion</button></div>:<>
+ <div className="photographer-toolbar"><p>{state.response_count} confirmation(s) reçue(s)</p><button className="text-link" disabled={busy} onClick={()=>void logout()}><LogOut size={14}/> Déconnexion</button></div>
+ {!state.draft_uploads_ready&&<p className="form-error" role="status">L’import attend l’activation SQL des brouillons. Les albums et photographies existants sont conservés.</p>}
+ <form className="album-create" onSubmit={e=>{e.preventDefault();void action(async()=>{const a=await api<AdminAlbum>('/api/admin/albums',{method:'POST',body:JSON.stringify({title})});setTitle('');setAlbum(a.id);await refresh();setNotice('Album créé en privé.');});}}><label htmlFor="album-title">Créer un album<input id="album-title" required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)} placeholder="La cérémonie, les mariés, la soirée…"/></label><button className="button" disabled={busy}><Plus size={15}/> Créer</button></form>
+ <div className="upload-photos"><label htmlFor="upload-album">Album à alimenter<select id="upload-album" disabled={busy||pending} value={album} onChange={e=>setAlbum(e.target.value)}><option value="">Choisir un album</option>{state.albums.filter(a=>!a.hidden).map(a=><option key={a.id} value={a.id}>{a.title}</option>)}</select></label><label className="file-button"><Upload size={16}/> Choisir des photographies<input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={busy||pending||!album||!state.draft_uploads_ready} onChange={e=>{if(e.target.files)stage(Array.from(e.target.files));e.target.value='';}}/></label><p className="field-note">JPEG, PNG ou WebP · 20 Mo par fichier · import en brouillon, sans publication automatique.</p>
+ {staged.length>0&&<><div className="staged-grid">{staged.map((p,i)=><figure key={p.url}><img src={p.url} alt={'Aperçu '+(i+1)} loading="lazy"/><figcaption>{p.file.name}</figcaption></figure>)}</div><button type="button" className="button" disabled={busy||!album} onClick={()=>void upload()}>{pending?'Réessayer les imports restants':'Importer '+staged.length+' photographie(s)'}</button><button type="button" className="text-link" disabled={busy} onClick={()=>void discard()}>Retirer la sélection de fichiers</button></>}
+ {uploading&&<button type="button" className="text-link" onClick={()=>void stop()}>Arrêter les imports</button>}</div>
+ <div className="publication-control"><p>Les brouillons restent privés. La galerie conserve sa date d’ouverture existante et votre autorisation de publication.</p><button type="button" className="button button-outline" disabled={busy} onClick={()=>void patch('/api/admin/settings',{galleryPublished:!state.settings.galleryPublished})}>{state.settings.galleryPublished?'Fermer la galerie publique':'Autoriser la galerie publique'}</button></div>
+ {Array.from(recent.current).some(([id])=>!state.albums.some(a=>a.photos.some(p=>p.id===id)))&&<div className="staged-grid recent-imports">{Array.from(recent.current).filter(([id])=>!state.albums.some(a=>a.photos.some(p=>p.id===id))).map(([id,p])=><figure key={id}>{p.url?<img src={p.url} alt={p.name} loading="lazy"/>:<p>Nouvel import privé</p>}<label><input type="checkbox" checked={selected.has(id)} disabled={busy} onChange={e=>setSelected(prev=>{const next=new Set(prev);if(e.target.checked)next.add(id);else next.delete(id);return next;})}/> {p.name} · Brouillon importé</label></figure>)}</div>}
+ <div className="publication-toolbar"><label><input type="checkbox" checked={drafts.length>0&&drafts.every(p=>selected.has(p.id))} disabled={busy||!drafts.length} onChange={e=>setSelected(e.target.checked?new Set(drafts.map(p=>p.id)):new Set())}/> Sélectionner les brouillons chargés</label><button type="button" className="button" disabled={busy||!selected.size} onClick={()=>void publish()}>Publier les photos ({selected.size})</button></div>
+ {state.albums.map(a=><section className="managed-album" key={a.id} aria-label={'Album '+a.title}><div className="photographer-toolbar"><input aria-label={'Renommer l’album '+a.title} defaultValue={a.title} maxLength={120} disabled={busy} onBlur={e=>{const value=e.target.value.trim();if(value&&value!==a.title)void patch('/api/admin/albums/'+a.id,{title:value});}}/><span>{a.published?'Album publié':'Album privé'}</span><button type="button" className="text-link" disabled={busy} onClick={()=>void patch('/api/admin/albums/'+a.id,{published:!a.published})}>{a.published?'Dépublier l’album':'Publier l’album'}</button><button type="button" className="text-link" disabled={busy} onClick={()=>void patch('/api/admin/albums/'+a.id,{hidden:!a.hidden})}>{a.hidden?'Restaurer l’album':'Archiver l’album'}</button></div><div className="admin-photo-grid">{a.photos.map(p=><div key={p.id} className={'photo-card '+(p.hidden?'photo-hidden':'')}><img src={p.url} alt={p.caption||'Photographie de l’album'} loading="lazy"/>{p.hidden?<label><input type="checkbox" aria-label={'Sélectionner '+p.caption} disabled={busy||a.hidden} checked={selected.has(p.id)} onChange={e=>setSelected(prev=>{const next=new Set(prev);if(e.target.checked)next.add(p.id);else next.delete(p.id);return next;})}/> Non publiée</label>:<button type="button" className="text-link" disabled={busy} onClick={()=>void patch('/api/admin/photos/'+p.id,{hidden:true})}>Masquer la photo</button>}</div>)}</div>{a.has_more&&<button type="button" className="text-link" disabled={busy} onClick={()=>void morePhotos(a)}>Voir les photographies suivantes</button>}</section>)}
+ <details className="moderate-messages"><summary>Gérer les messages du livre d’or</summary>{state.messages.map(m=><div key={m.id}><strong>{m.author}</strong><p>{m.body}</p><button type="button" className="text-link" disabled={busy} onClick={()=>void patch('/api/admin/messages/'+m.id,{hidden:!m.hidden})}>{m.hidden?'Réafficher ce message':'Masquer ce message'}</button></div>)}{state.messages_has_more&&<button type="button" className="text-link" disabled={busy} onClick={()=>void moreMessages()}>Voir les messages suivants</button>}</details><OwnerDiagnostics/>
+ </>}{notice&&<p className="message-sent" role="status">{notice}</p>}{error&&<p className="form-error" role="alert">{error}</p>}</div>;
 }

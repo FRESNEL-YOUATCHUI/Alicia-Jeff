@@ -1,4 +1,3 @@
-import {getSupabase} from './supabase';
 export class ApiFailure extends Error {
   constructor(message:string,public status:number,public code:string){super(message);}
 }
@@ -7,6 +6,7 @@ export async function api<T>(route:string,options:RequestInit={}):Promise<T>{
   if(typeof options.body==='string'&&!headers.has('Content-Type'))headers.set('Content-Type','application/json');
   const admin=route.startsWith('/api/admin/');
   async function token(refresh=false){
+    const {getSupabase}=await import('./supabase');
     const auth=getSupabase().auth;
     const {data,error}=await (refresh?auth.refreshSession():auth.getSession());
     if(error||!data.session)throw new ApiFailure('Veuillez vous connecter à l’espace photographe.',401,'authentication_required');

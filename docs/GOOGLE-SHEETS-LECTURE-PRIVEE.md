@@ -181,7 +181,7 @@ n’est exécuté par ces tests.
 GET /api/admin/google-sheets-readiness vérifie STS → IAM Credentials → Sheets dans la fonction Vercel.
 Il réutilise le lecteur OfficialList et l’adaptateur OIDC de production. Il est protégé par la même
 vérification de session et de rôle que le diagnostic OIDC, avec une restriction supplémentaire au rôle admin.
-Un compte photographer conserve son accès au diagnostic OIDC, mais reçoit 403 sur ce diagnostic Google.
+Un compte photographer conserve son accès au diagnostic OIDC, mais reçoit 403 sur ce diagnostic Google sans autorisation propriétaire temporaire.
 Aucun rôle existant n’est modifié automatiquement.
 
 La cible est fixée côté serveur : feuille officielle existante, plage exacte 'Invités'!A2:A.
@@ -264,6 +264,39 @@ Les réponses, y compris les erreurs, portent les directives privées/no-store e
 La chaîne réelle n’est pas exécutée contre Google par les tests locaux : transports Google et réponses Auth/rôles
 sont simulés. Le SDK, l’adaptateur, le lecteur et le routage HTTP réels sont exercés, sans données hébergées modifiées.
 Tests ciblés : node --test tests/google-sheets-readiness.test.mjs.
+
+## Autorisation temporaire du propriétaire sans rôle administrateur
+
+Le contrôle distant en lecture seule du 20 novembre confirme zéro compte admin et un compte photographer.
+Le propriétaire peut désormais autoriser uniquement le diagnostic Google pour son propre compte déjà authentifié.
+Aucun rôle Supabase, privilège SQL, permission Storage ou permission Google Cloud n’est modifié.
+
+Sur l’ordinateur du propriétaire qui possède déjà la configuration serveur privée du projet :
+
+```powershell
+npm run owner:grant -- --user-id UUID_DU_COMPTE_PROPRIETAIRE
+```
+
+Remplacer UUID_DU_COMPTE_PROPRIETAIRE par l’identifiant du compte concerné dans Supabase Auth.
+Cet identifiant ne doit pas être envoyé dans le chat. La commande utilise la clé serveur locale existante
+comme clé HMAC, sans l’afficher ni la modifier. Elle n’effectue aucune opération réseau.
+Elle vérifie l’exclusion Git puis écrit seulement .qa-artifacts/private/owner-google-probe.json.
+Le jeton n’est pas imprimé. Il est lié par empreinte au compte exact, à ce seul endpoint et expire après dix minutes
+(quinze minutes maximum imposées au format). Le fichier est une capacité privée à garder hors Git et hors messagerie.
+
+Après votre déploiement de cette version : ouvrir /photographe, se connecter avec le compte correspondant,
+puis Diagnostics temporaires du propriétaire. Charger le fichier local et cliquer Vérifier Google Sheets.
+Le fichier est lu en mémoire ; le jeton est transmis seulement dans l’en-tête X-AJ-Owner-Probe du diagnostic.
+Le JWT Supabase habituel reste obligatoire. Sans session, mauvais compte, signature modifiée ou expiration : refus.
+La délégation ne peut pas servir à une autre API et ne change pas le rôle du photographe.
+Les deux variables d’activation Production et leur échéance, ainsi que toutes les restrictions OIDC, restent obligatoires.
+
+Traçabilité : le fichier local et la sortie de la commande portent une référence d’audit aléatoire.
+Une utilisation autorisée produit un événement owner_google_probe dans les logs serveur Vercel avec cette référence,
+la date et le statut HTTP ; aucun nom, identifiant de compte, jeton, claim ou secret n’est journalisé.
+Il s’agit d’une délégation réutilisable pendant sa courte fenêtre, soumise au cooldown par instance, et non d’un jeton
+à usage unique garanti entre instances. Après validation : laisser expirer la délégation et la fenêtre de diagnostic,
+puis retirer l’activation ou supprimer le diagnostic lors d’un changement ultérieur.
 
 Références officielles :
 - https://vercel.com/docs/oidc/reference

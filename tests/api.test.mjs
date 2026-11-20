@@ -128,6 +128,9 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
   await pg.query('update wedding_settings set gallery_published=true');await pg.query('update wedding_albums set published=true where id=$1',[ALBUM]);
   assert.equal((await call(path)).status,404);
   await pg.query("update wedding_settings set release_at=now()-interval '1 minute'");
+  assert.equal((await call(path)).body.photos.length,0);
+  assert.equal((await call('/api/photos/'+intent.id)).status,404);
+  assert.equal((await call('/api/admin/photos/'+intent.id,{method:'PATCH',token:'valid',body:{hidden:false}})).status,200);
   assert.equal((await call(path)).body.photos.length,1);
   await pg.query('update wedding_photos set hidden=true');
   assert.equal((await call(path)).body.photos.length,0);

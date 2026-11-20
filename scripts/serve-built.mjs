@@ -50,7 +50,7 @@ export async function startBuiltApp({port=3000,host='127.0.0.1',root=path.join(p
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve);});
  const url='http://'+host+':'+server.address().port;
  logger.info('Alicia & Jeff (build + API Supabase) : '+url+'/');
- logger.info('Version : rsvp-qr-20261119. Un billet = une personne. Aucun backend historique.');
+ logger.info('Version : finalisation-20261120. Un billet = une personne. Aucun backend historique.');
  return {server,url,close:async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

@@ -1,4 +1,5 @@
 import {timingSafeEqual} from 'node:crypto';
+import {RELEASE} from './release.mjs';
 import {ApiError,checkOrigin,readJson,requireMethod,routeFromRequest,sendError,sendJson} from './http.mjs';
 import {albumPatch,bool,clientRef,messageInput,offset,rejectUnknown,rsvpInput,string,uploadInput,uuid} from './validation.mjs';
 import {getSupabase,requireStaff,serverConfig,bearerToken} from './supabase.mjs';
@@ -6,6 +7,7 @@ import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
 import {OfficialList} from './official-list.mjs';
 import {oidcRequestDiagnostic} from './google-oidc.mjs';
+import {checkOwnerProbeGrant} from './owner-probe-grant.mjs';
 import {googleSheetsReadiness,GOOGLE_SHEETS_READINESS_HEADERS} from './google-sheets-readiness.mjs';
 import {isLegacyTicket,isTicketReference,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
 import {hashRef} from './repository.mjs';
@@ -16,7 +18,7 @@ export function createHandler(dependencies){
     let requestRoute;
     try{
       const {route,query}=routeFromRequest(req);requestRoute=route;
-      if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless',release:'rsvp-qr-20261119',individual_rsvp:true,qr_links:true});return;}
+      if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless',release:RELEASE,individual_rsvp:true,qr_links:true});return;}
       const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/oidc-readiness','/api/admin/google-sheets-readiness','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
       if(!known)throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       if(route==='/api/admin/google-sheets-readiness')for(const [key,value] of Object.entries(GOOGLE_SHEETS_READINESS_HEADERS))res.setHeader(key,value);
@@ -94,11 +96,14 @@ export function createHandler(dependencies){
         requireMethod(req,['GET']);result=(deps.oidcDiagnostic??oidcRequestDiagnostic)(req);
       }else if(route==='/api/admin/google-sheets-readiness'){
         requireMethod(req,['GET']);
-        if(staff.role!=='admin')throw new ApiError(403,'admin_required','Accès administrateur requis.');
+        const ownerGrant=staff.role==='admin'?null:checkOwnerProbeGrant(req,staff,deps.rateSecret??process.env.SUPABASE_SECRET_KEY);
+        if(staff.role!=='admin'&&!ownerGrant)throw new ApiError(403,'admin_required','Autorisation propriétaire temporaire ou accès administrateur requis.');
         const diagnostic=await (deps.googleSheetsReadiness??googleSheetsReadiness)(req);
+        if(ownerGrant)try{(deps.audit??(event=>console.info(JSON.stringify(event))))({event:'owner_google_probe',audit_id:ownerGrant.audit_id,at:new Date().toISOString(),status:diagnostic.status});}catch{/* Audit failure never reveals credentials. */}
         sendJson(res,diagnostic.status,diagnostic.body,{...GOOGLE_SHEETS_READINESS_HEADERS,...diagnostic.headers});return;
       }else if(route==='/api/admin/state'){
         requireMethod(req,['GET']);result=await repo.adminState();
+        result.draft_uploads_ready=typeof repo.draftUploadsReady==='function'?await repo.draftUploadsReady():false;
         result.albums=await Promise.all(result.albums.map(async a=>({...a,photos:await storage.sign(a.photos)})));
       }else if(route==='/api/admin/messages'){
         requireMethod(req,['GET']);result=await repo.adminMessages(offset(query.get('offset')));

@@ -12,7 +12,7 @@ test('built start and preview serve real gateway routes, private paths and media
  try{
   const home=await fetch(app.url);assert.equal(home.status,200);assert.equal(home.headers.get('cache-control'),'no-cache');
   const health=await(await fetch(app.url+'/api/health')).json();
-  assert.equal(health.release,'finalisation-20261120');assert.equal(health.individual_rsvp,true);
+  assert.equal(health.release,'rsvp-multi-20261120');assert.equal(health.individual_rsvp,true);
   assert.equal((await fetch(app.url+'/api/admin/state')).status,401);
   assert.equal((await fetch(app.url+'/api/gateway?__wedding_route=health')).status,200);
   assert.equal((await fetch(app.url+'/api/missing')).status,404);

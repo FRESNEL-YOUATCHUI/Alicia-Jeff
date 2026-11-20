@@ -82,8 +82,10 @@ export function createHandler(dependencies){
           }
         }
       }else if(route==='/api/rsvp/ticket'){
-        requireMethod(req,['POST']);const body=await readJson(req);rejectUnknown(body,['client_ref']);
-        const ref=clientRef(body.client_ref);await rate('ticket-restore',40);result=await repo.restoreTicket(ref);
+        requireMethod(req,['POST']);const body=await readJson(req);rejectUnknown(body,['client_ref','qr_token']);
+        if((body.client_ref===undefined)===(body.qr_token===undefined))throw new ApiError(400,'invalid_reference','Indiquez un seul code personnel.');
+        if(body.qr_token!==undefined&&!isTicketReference(body.qr_token))throw new ApiError(400,'invalid_reference','Vérifiez votre code personnel de récupération.');
+        const ref=body.client_ref===undefined?null:clientRef(body.client_ref);await rate('ticket-restore',40);result=ref?await repo.restoreTicket(ref):await repo.restoreByToken(body.qr_token);
       }else if(route==='/api/rsvp'){
         requireMethod(req,['POST']);const input=rsvpInput(await readJson(req));await rate('rsvp',40);result=await repo.rsvp(input);
       }else if(route==='/api/messages'){

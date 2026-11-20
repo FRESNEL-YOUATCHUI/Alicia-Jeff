@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AsyncLocalStorage} from 'node:async_hooks';
 import {createServer} from 'node:http';
-import {randomUUID} from 'node:crypto';
+import {createRsvpRef} from '../shared/rsvp-reference.mjs';
+import {requireStaff} from '../serverless/supabase.mjs';
 import {GoogleSheetsOidcAuth,GOOGLE_IDENTITY,VERCEL_IDENTITY,SHEETS_READONLY_SCOPE,googleOidcConfiguration,googleOidcReadiness} from '../serverless/google-oidc.mjs';
 import {OfficialList} from '../serverless/official-list.mjs';
 import {createHandler} from '../serverless/handler.mjs';
@@ -207,17 +208,17 @@ test('HTTP scan never consumes a ticket on STS, IAM, Sheets or assertion failure
   f.auth.tokenProvider=async()=>{f.state.tokenCalls++;return jwt(expired?{exp:Math.floor(Date.now()/1000)-1}:{});};
   const list=new OfficialList({env:production,authFactory:()=>f.auth,
     fetchImpl:async()=>new Response(JSON.stringify({values:[['Élodie Ndiaye']]}),{status:sheetStatus})});
-  const server=createServer(createHandler({repo,storage:{},officialList:list,rateSecret:'isolated-oidc-handler-test-only'}));
+  const server=createServer(createHandler({repo,storage:{},officialList:list,authenticate:req=>requireStaff(req,repo.client),rateSecret:'isolated-oidc-handler-test-only'}));
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const origin='http://127.0.0.1:'+server.address().port;
   try{
     const response=await fetch(origin+'/api/rsvp',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin},
-      body:JSON.stringify({first_name:'Élodie',last_name:'Ndiaye',client_ref:randomUUID()})});
+      body:JSON.stringify({first_name:'Élodie',last_name:'Ndiaye',client_ref:await createRsvpRef({first_name:'Élodie',last_name:'Ndiaye'})})});
     assert.equal(response.status,200);const ticket=(await response.json()).ticket;
     assert.equal(f.calls.length,0);assert.equal(f.state.tokenCalls,0);
     const opened=await fetch(origin+'/api/tickets/open?token='+ticket.qr_token);
     const html=await opened.text(),input=JSON.parse(html.match(/const input=(.*);/)[1]),cookie=opened.headers.get('set-cookie').split(';')[0];
-    const scan=async()=>{const r=await fetch(origin+'/api/tickets/verify',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,Cookie:cookie,'Sec-Fetch-Site':'same-origin'},body:JSON.stringify({token:ticket.qr_token,proof:input.proof})});return{status:r.status,body:await r.json()};};
+    const scan=async()=>{const r=await fetch(origin+'/api/tickets/verify',{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,Cookie:cookie,'Sec-Fetch-Site':'same-origin',Authorization:'Bearer valid'},body:JSON.stringify({token:ticket.qr_token,proof:input.proof})});return{status:r.status,body:await r.json()};};
     for(const stage of ['sts','iam','sheets','expired']){
       f.state.stsStatus=stage==='sts'?403:200;f.state.iamStatus=stage==='iam'?403:200;
       sheetStatus=stage==='sheets'?503:200;expired=stage==='expired';

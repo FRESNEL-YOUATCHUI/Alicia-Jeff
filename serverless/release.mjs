@@ -1,1 +1,1 @@
-export const RELEASE='finalisation-20261120';
+export const RELEASE='rsvp-multi-20261120';

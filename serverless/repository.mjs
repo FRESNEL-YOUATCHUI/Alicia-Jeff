@@ -1,5 +1,6 @@
 import {createHash,createHmac,randomBytes} from 'node:crypto';
 import {ApiError} from './http.mjs';
+import {isBoundRsvpRef,matchesRsvpRef} from '../shared/rsvp-reference.mjs';
 export const hashRef=value=>createHash('sha256').update(value).digest('hex');
 export class Repository {
   constructor(client){this.client=client;}
@@ -23,12 +24,35 @@ export class Repository {
   }
   async rsvp(input){
     const {client_ref,...fields}=input,p_input={...fields,ref_hash:hashRef(client_ref)};
+    // Bind modern references to the entire payload BEFORE any read/write. Different
+    // payloads cannot race through the historical SQL upsert under the same hash.
+    if(isBoundRsvpRef(client_ref)&&!await matchesRsvpRef(client_ref,fields))throw new ApiError(409,'rsvp_reference_mismatch','Cette référence appartient à une autre confirmation. Choisissez « Confirmer pour une autre personne ».');
+    const existing=await this.findRsvp('ref_hash',p_input.ref_hash);
+    if(existing){
+      if(existing.first_name!==fields.first_name||existing.last_name!==fields.last_name)throw new ApiError(409,'rsvp_reference_mismatch','Cette référence appartient à une autre personne. Récupérez son billet ou commencez une nouvelle confirmation.');
+      return {...await this.restoreTicket(client_ref),message_published:false};
+    }
+    // Old browser-wide references remain recoverable, but must never create or
+    // overwrite another guest. New confirmations use payload-bound references.
+    if(!isBoundRsvpRef(client_ref))throw new ApiError(409,'fresh_confirmation_required','Rechargez le site pour commencer une nouvelle confirmation individuelle.');
     try{return await this.rpc('confirm',{p_input,p_token:randomBytes(32).toString('base64url')});}
     catch(error){
       if(!(error instanceof ApiError)||!error.missingTicketActivation)throw error;
       // Explicit pre-activation compatibility; never simulates an entry authorization.
       return {...await this.rpc('rsvp',{p_input}),entry_verification_ready:false};
     }
+  }
+  async findRsvp(column,value){
+    const {data,error}=await this.client.from('wedding_rsvps').select('ref_hash,first_name,last_name').eq(column,value).maybeSingle();
+    if(error)throw new ApiError(503,'database_unavailable','Les données sont momentanément indisponibles.');
+    return data;
+  }
+  async restoreByToken(token){
+    const entryToken=/^[0-9a-f-]{36}$/i.test(token)?await this.resolveLegacyTicket(token):token;
+    const guest=entryToken?await this.lookupTicket(entryToken):null;
+    const row=guest?await this.findRsvp('id',guest.rsvp_id):null;
+    if(!row)throw new ApiError(404,'not_found','Ce code ne correspond à aucun billet.');
+    return this.rpc('ticket_restore',{p_ref_hash:row.ref_hash,p_token:entryToken});
   }
   restoreTicket(ref){return this.rpc('ticket_restore',{p_ref_hash:hashRef(ref),p_token:randomBytes(32).toString('base64url')});}
   async resolveLegacyTicket(id){

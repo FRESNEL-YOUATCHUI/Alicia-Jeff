@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createRsvpRef} from '../shared/rsvp-reference.mjs';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {randomUUID} from 'node:crypto';
@@ -44,7 +45,7 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
   assert.equal((await call('/api/admin/uploads/cleanup',{...json({}),token:'no-role'})).status,403);
  });
  let ticket;
- const ref=randomUUID(),input={first_name:'Jean Pierre',last_name:'Ndiaye Diop',song:'Une chanson',message:'Tous nos vœux',client_ref:ref};
+ const input={first_name:'Jean Pierre',last_name:'Ndiaye Diop',song:'Une chanson',message:'Tous nos vœux'};input.client_ref=await createRsvpRef(input);
  await t.test('RSVP validates input and rejects cross-origin / oversized forms',async()=>{
   assert.equal((await call('/api/rsvp',json({...input,participants:0}))).status,400);
   assert.equal((await call('/api/rsvp',json({...input,website:'spam'}))).status,400);
@@ -60,9 +61,10 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
   assert.equal((await pg.query('select count(*)::int n from wedding_rsvps')).rows[0].n,1);
   assert.equal((await pg.query('select count(*)::int n from wedding_messages')).rows[0].n,1);
  });
- await t.test('RSVP update preserves ID, creation date and moderation',async()=>{
+ await t.test('RSVP retries preserve ID, creation date and moderation; edits cannot overwrite',async()=>{
   await pg.query('update wedding_messages set hidden=true');
-  const result=await call('/api/rsvp',json({...input,song:'Chanson modifiée'}));
+  assert.equal((await call('/api/rsvp',json({...input,song:'Chanson modifiée'}))).status,409);
+  const result=await call('/api/rsvp',json(input));
   assert.equal(result.body.ticket.id,ticket.id);assert.equal(result.body.ticket.created_at,ticket.created_at);
   assert.equal(result.body.message_published,false);
  });
@@ -166,7 +168,7 @@ test('Serverless API + isolated PostgreSQL transactions (not hosted Supabase)',a
  await t.test('existing RSVP references and UUIDs survive migration/reconfirmation',async()=>{
   const existingRef=randomUUID(),existingId=randomUUID();
   await pg.query('insert into wedding_rsvps(id,ref_hash,first_name,last_name,participants) values($1,$2,$3,$4,1)',[existingId,hashRef(existingRef),'Ancien','Invité']);
-  const result=await call('/api/rsvp',json({...input,client_ref:existingRef}));
+  const result=await call('/api/rsvp',json({...input,first_name:'Ancien',last_name:'Invité',client_ref:existingRef}));
   assert.equal(result.body.ticket.id,existingId);assert.match(result.body.ticket.qr_token,/^[A-Za-z0-9_-]{43}$/);
  });
  await t.test('table grants block direct reads; authenticated own-role lookup still works',async()=>{

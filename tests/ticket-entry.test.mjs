@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createRsvpRef} from '../shared/rsvp-reference.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {createServer,get} from 'node:http';
@@ -26,7 +27,7 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   const response=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,'Sec-Fetch-Site':'same-origin',...(path==='/api/tickets/verify'?{Authorization:'Bearer valid'}:{}),...headers},body:JSON.stringify(body)});
   return {status:response.status,body:await response.json()};
  };
- const confirm=async(first,last,ref=randomUUID())=>(await post('/api/rsvp',{first_name:first,last_name:last,client_ref:ref})).body;
+ const confirm=async(first,last,ref)=>{const input={first_name:first,last_name:last};return(await post('/api/rsvp',{...input,client_ref:ref||await createRsvpRef(input)})).body;};
  const open=async(token,headers={})=>{
   const response=await new Promise((resolve,reject)=>{
    get(origin+'/api/tickets/open?token='+token,{headers:{'Sec-Fetch-User':'?1','Sec-Fetch-Mode':'navigate','Sec-Fetch-Dest':'document',...headers}},res=>{
@@ -45,7 +46,7 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
  try{
  let known,absent;
  await t.test('both recognized and absent guests confirm without consulting the official list',async()=>{
-  const ref=randomUUID();known=(await confirm('Élodie','Ndiaye',ref)).ticket;
+  const ref=await createRsvpRef({first_name:'Élodie',last_name:'Ndiaye'});known=(await confirm('Élodie','Ndiaye',ref)).ticket;
   absent=(await confirm('Autre','Invité')).ticket;
   assert.equal(reads,0);assert.equal(known.qr_version,2);assert.match(known.qr_token,/^[A-Za-z0-9_-]{43}$/);
   const duplicate=await confirm('Élodie','Ndiaye',ref);assert.deepEqual(duplicate.ticket,known);
@@ -130,8 +131,8 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   finally{repo.rate=rate;}
  });
  await t.test('name edit during verification is detected atomically and admitted names cannot be replaced',async()=>{
-  const ref=randomUUID(),ticket=(await confirm('Identité','Avant',ref)).ticket;
-  const before=await repo.lookupTicket(ticket.qr_token);await confirm('Identité','Après',ref);
+  const ref=await createRsvpRef({first_name:'Identité',last_name:'Avant'}),ticket=(await confirm('Identité','Avant',ref)).ticket;
+  const before=await repo.lookupTicket(ticket.qr_token);await repo.rpc('rsvp',{p_input:{first_name:'Identité',last_name:'Après',participants:1,ref_hash:hashRef(ref)}});
   const raced=await repo.enterTicket(ticket.qr_token,before.updated_at,'identite avant');
   assert.equal(raced.status,'changed');assert.equal((await repo.lookupTicket(ticket.qr_token)).checked_in_at,null);
   rows.push(['Identité Après']);assert.equal((await scan(ticket)).body.status,'valid');
@@ -189,11 +190,11 @@ test('navigation proof expiry, cookie binding and ticket substitution fail close
 });
 test('pre-activation compatibility stores real RSVP through the original RPC; other database errors do not fall back',async()=>{
  let calls=[];const legacy={ticket:{id:'existing'},message_published:false};
- const client={rpc:async(name)=>{calls.push(name);return name==='wedding_api_confirm'?{data:null,error:{code:'PGRST202'}}:{data:legacy,error:null};}};
- const result=await new Repository(client).rsvp({client_ref:randomUUID(),first_name:'Test',last_name:'Legacy',participants:1});
+ const client={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:null,error:null})})})}),rpc:async(name)=>{calls.push(name);return name==='wedding_api_confirm'?{data:null,error:{code:'PGRST202'}}:{data:legacy,error:null};}};
+ const result=await new Repository(client).rsvp({client_ref:await createRsvpRef({first_name:'Test',last_name:'Legacy'}),first_name:'Test',last_name:'Legacy',participants:1});
  assert.deepEqual(result,{...legacy,entry_verification_ready:false});assert.deepEqual(calls,['wedding_api_confirm','wedding_api_rsvp']);
  calls=[];client.rpc=async(name)=>{calls.push(name);return{data:null,error:{code:'42703'}};};
- await assert.rejects(new Repository(client).rsvp({client_ref:randomUUID()}),e=>e.code==='schema_required');
+ await assert.rejects(new Repository(client).rsvp({client_ref:await createRsvpRef({first_name:'Test',last_name:'Legacy'}),first_name:'Test',last_name:'Legacy',participants:1}),e=>e.code==='schema_required');
  assert.deepEqual(calls,['wedding_api_confirm']);
 });
 

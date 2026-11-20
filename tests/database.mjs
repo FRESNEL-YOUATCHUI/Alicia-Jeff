@@ -18,12 +18,12 @@ export function clientFor(pg){
   from(table){
    if(!['wedding_staff','wedding_rsvps'].includes(table))throw Error('Unexpected table');
    return {
-    select(){
+    select(columns){
      return {
-      eq(_column,id){
+      eq(column,id){
        return {
         async maybeSingle(){
-         try{return{data:(await pg.query('select '+(table==='wedding_staff'?'role from public.wedding_staff where user_id':'ref_hash from public.wedding_rsvps where id')+'=$1',[id])).rows[0]??null,error:null};}
+         try{return{data:(await pg.query('select '+(table==='wedding_staff'?'role from public.wedding_staff where user_id':(columns==='ref_hash'?'ref_hash':'ref_hash,first_name,last_name')+' from public.wedding_rsvps where '+(['id','ref_hash'].includes(column)?column:(()=>{throw Error('Unexpected column');})()))+'=$1',[id])).rows[0]??null,error:null};}
          catch(error){return{data:null,error};}
         }
        };

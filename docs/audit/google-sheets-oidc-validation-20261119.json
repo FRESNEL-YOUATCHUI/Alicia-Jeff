@@ -1,0 +1,174 @@
+{
+  "checked_at": "2026-11-19T23:06:01.700Z",
+  "project": "Alicia & Jeff",
+  "scope": "Local implementation of production-only Google Sheets OIDC authentication",
+  "status": "code_validated_production_google_exchange_not_executed",
+  "files_modified": [
+    ".env.example",
+    "package.json",
+    "package-lock.json",
+    "serverless/google-oidc.mjs",
+    "serverless/official-list.mjs",
+    "scripts/inspect-ticket-readiness.mjs",
+    "scripts/check-frontend-secrets.mjs",
+    "tests/google-oidc.test.mjs",
+    "tests/ticket-entry.test.mjs",
+    "tests/activation-audit.test.mjs",
+    "docs/GOOGLE-SHEETS-LECTURE-PRIVEE.md",
+    "docs/RSVP-QR-FINALISATION.md",
+    "docs/audit/google-sheets-oidc-validation-20261119.json"
+  ],
+  "implementation": {
+    "sdk": "@vercel/oidc@4.0.9",
+    "request_scoped_identity": true,
+    "private_key_authentication": false,
+    "flow": [
+      "Vercel request OIDC assertion",
+      "Google STS token exchange",
+      "IAM Credentials service account impersonation",
+      "Private Google Sheets read"
+    ],
+    "strict_production_issuer_audience_subject": true,
+    "final_scope": "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "requested_google_token_lifetime_seconds": 600,
+    "token_cache": false,
+    "official_list_cache": false,
+    "authentication_deadline_ms": 7000,
+    "sheets_deadline_ms": 8000,
+    "validation_at_rsvp": false,
+    "validation_at_ticket_scan": true,
+    "admission_on_google_failure": false,
+    "google_error_bodies_exposed": false
+  },
+  "configuration": {
+    "environment_variables_defined": {
+      "SUPABASE_URL": true,
+      "SUPABASE_SECRET_KEY": true,
+      "GOOGLE_SHEETS_SPREADSHEET_ID": false,
+      "GOOGLE_SHEETS_RANGE": false,
+      "GCP_PROJECT_ID": false,
+      "GCP_PROJECT_NUMBER": false,
+      "GCP_WORKLOAD_IDENTITY_POOL_ID": false,
+      "GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID": false,
+      "GCP_SERVICE_ACCOUNT_EMAIL": false,
+      "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY": false,
+      "VERCEL_OIDC_TOKEN": true
+    },
+    "identity": {
+      "mode": "vercel-oidc",
+      "configuration_valid": true,
+      "conflicting_variables": [],
+      "production_runtime": false,
+      "legacy_private_key_ignored": false
+    },
+    "remote_vercel_environment_inspected": false,
+    "google_variables_without_local_values": "Verified server-side defaults are used; absence of optional GCP and Sheet variables is not a missing credential.",
+    "remote_google_configuration": "Identifiers and permissions supplied as verified by owner; not independently modified or inspected during implementation.",
+    "remote_vercel_configuration": "Not inspected; enable the team issuer OIDC and system environment variables in Production."
+  },
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "npm run lint",
+      "result": "passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed",
+      "note": "Vite envelope warning resolved by existing postbuild asset copy; dist/wedding/enveloppe-aj.webp present."
+    },
+    {
+      "command": "npm test",
+      "result": "passed",
+      "legacy_server_tests": 7,
+      "api_tests": 153,
+      "experience_assertions": 7,
+      "log_sha256": "10c52684ae5f267a7e3b28535009a9e30483ad4106dc6b0fd58ecc80816e9fb6"
+    },
+    {
+      "command": "npm run test:oidc",
+      "result": "covered_by_full_npm_test",
+      "new_oidc_tests_and_subtests": 61,
+      "google_transports": "simulated",
+      "real_vercel_request_context_sdk_test": true
+    },
+    {
+      "command": "npm run check:secrets",
+      "result": "passed",
+      "frontend_text_artifacts": 7
+    },
+    {
+      "command": "npm run verify:runtime",
+      "result": "passed",
+      "http_checks": 16,
+      "real_supabase_read_only_checks": true,
+      "public_souvenirs_readiness": {
+        "status": 200,
+        "code": "ready",
+        "ready": true
+      }
+    },
+    {
+      "command": "npm run inspect:tickets",
+      "result": "expected_not_ready_outside_production",
+      "exit_code": 2,
+      "schema": {
+        "ready": true,
+        "code": "ready",
+        "lookup_rpc_ready": true
+      },
+      "sheet": {
+        "ready": false,
+        "code": "production_identity_required"
+      }
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "check": "Supabase SQL file integrity",
+      "result": "passed",
+      "files_checked": 13,
+      "changed": []
+    }
+  ],
+  "test_coverage": [
+    "Exact STS resource and distinction from Vercel JWT audience",
+    "Readonly impersonated token scope and bounded lifetime",
+    "Concurrent request-scoped SDK token lookup",
+    "No identity requests from local/Preview/Development runtimes",
+    "Conflicting resource configuration rejected",
+    "Expired, malformed, future or unexpected OIDC claims",
+    "STS and IAM 400/401/403/429/503, network failures, malformed responses, token expirations and deadlines",
+    "Sheets 401/403/429/503, timeout and recovery",
+    "Google failure never consumes a confirmed ticket",
+    "RSVP does not call Google"
+  ],
+  "windows_test_fix": "Existing activation audit comparison now normalizes CRLF/LF on both sides. All assertions remain. No SQL changed.",
+  "not_tested": [
+    "Actual production Vercel token exchange with Google STS and IAM",
+    "Real private Sheet read using the production identity",
+    "Actual admission in deployed Production",
+    "Remote Vercel environment variables and OIDC settings"
+  ],
+  "manual_remaining": [
+    "Review Vercel Production OIDC team issuer and exposure of system environment variables.",
+    "Check any remote GCP_* overrides against the verified server defaults; do not add a Google private key or static OIDC token.",
+    "Owner performs push and deployment when ready.",
+    "After deployment, validate a real production Sheet read or carefully controlled QR scan. A successful entry scan can consume a real ticket.",
+    "Keep local and Preview denied; do not relax Google conditions for testing."
+  ],
+  "constraints": {
+    "supabase_sql_modified": false,
+    "hosted_data_modified": false,
+    "google_permissions_modified": false,
+    "env_local_modified": false,
+    "private_key_created": false,
+    "github_push": false,
+    "vercel_deployment": false
+  }
+}

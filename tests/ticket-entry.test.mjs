@@ -6,11 +6,12 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {createHandler} from '../serverless/handler.mjs';
 import {Repository,hashRef} from '../serverless/repository.mjs';
 import {OfficialList,matchOfficialRows,normalizeGuestName,officialNames,inspectOfficialRows} from '../serverless/official-list.mjs';
+import {requireStaff} from '../serverless/supabase.mjs';
 import {ApiError} from '../serverless/http.mjs';
 import {scanChallenge,requireScanProof} from '../serverless/ticket-page.mjs';
 import {database,clientFor} from './database.mjs';
 test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
- const {pg}=await database(),repo=new Repository(clientFor(pg));
+ const {pg}=await database(),client=clientFor(pg),repo=new Repository(client);
  let rows=[['  ÉLODIE   NDIAYE  ']],down=false,reads=0,databaseDown=false;
  const lookup=repo.lookupTicket.bind(repo);repo.lookupTicket=token=>{if(databaseDown)throw new ApiError(503,'database_unavailable','Unavailable');return lookup(token);};
  const officialList={async match(guest){
@@ -18,11 +19,11 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   const name=normalizeGuestName(guest.first_name+' '+guest.last_name);
   return {name,status:matchOfficialRows(rows,name)};
  }};
- const server=createServer(createHandler({repo,storage:{},officialList,rateSecret:'isolated-tests-only'}));
+ const server=createServer(createHandler({repo,storage:{},officialList,authenticate:req=>requireStaff(req,client),rateSecret:'isolated-tests-only'}));
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const origin='http://127.0.0.1:'+server.address().port;
  const post=async(path,body,headers={})=>{
-  const response=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,'Sec-Fetch-Site':'same-origin',...headers},body:JSON.stringify(body)});
+  const response=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,'Sec-Fetch-Site':'same-origin',...(path==='/api/tickets/verify'?{Authorization:'Bearer valid'}:{}),...headers},body:JSON.stringify(body)});
   return {status:response.status,body:await response.json()};
  };
  const confirm=async(first,last,ref=randomUUID())=>(await post('/api/rsvp',{first_name:first,last_name:last,client_ref:ref})).body;
@@ -51,6 +52,13 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   const restored=await post('/api/rsvp/ticket',{client_ref:ref});assert.deepEqual(restored.body.ticket,known);
   assert.equal((await pg.query('select count(*)::int n from wedding_rsvps')).rows[0].n,2);
  });
+ await t.test('entry verification and JSON challenge require an authenticated staff role before any list read',async()=>{
+  const opened=await open(known.qr_token),body={token:known.qr_token,proof:opened.input.proof};const before=reads;
+  for(const [auth,status] of [['',401],['Bearer invalid',401],['Bearer no-role',403]]){const denied=await post('/api/tickets/verify',body,{Cookie:opened.cookie,Authorization:auth});assert.equal(denied.status,status);assert.equal(denied.body.admitted,false);assert.equal(reads,before);}
+  assert.equal((await repo.lookupTicket(known.qr_token)).checked_in_at,null);
+  const endpoint=origin+'/api/tickets/open?token='+known.qr_token;assert.equal((await fetch(endpoint,{headers:{Accept:'application/json'}})).status,401);assert.equal((await fetch(endpoint,{headers:{Accept:'application/json',Authorization:'Bearer no-role'}})).status,403);
+  const challenge=await fetch(endpoint,{headers:{Accept:'application/json',Authorization:'Bearer valid'}});assert.equal(challenge.status,200);assert.equal(typeof (await challenge.json()).proof,'string');assert.match(challenge.headers.get('set-cookie'),/HttpOnly; SameSite=Strict/);assert.equal(reads,before);assert.match(opened.html,/location.replace\('\/entree\?token=/);
+ });
  await t.test('GET, HEAD, link previews and forged/cross-origin/missing proofs cannot consume tickets',async()=>{
   const opened=await open(known.qr_token);assert.equal(opened.status,200);
   assert.equal(opened.input.automatic,true);assert.match(opened.headers.get('content-security-policy'),/frame-ancestors 'none'/);
@@ -69,6 +77,9 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
   assert.equal((await scan(known)).body.status,'valid');
   assert.equal((await scan(known)).body.status,'used');
   assert.ok((await repo.lookupTicket(known.qr_token)).checked_in_at);
+ });
+ await t.test('two authenticated concurrent scans admit only once',async()=>{
+  rows.push(['Course Simultanée']);const ticket=(await confirm('Course','Simultanée')).ticket,opened=await open(ticket.qr_token);const body={token:ticket.qr_token,proof:opened.input.proof};const results=await Promise.all([post('/api/tickets/verify',body,{Cookie:opened.cookie}),post('/api/tickets/verify',body,{Cookie:opened.cookie})]);assert.deepEqual(results.map(r=>r.body.status).sort(),['used','valid']);
  });
  await t.test('absent guest is not consumed and a later list addition is recognized',async()=>{
   assert.equal((await scan(absent)).body.status,'absent');

@@ -1,0 +1,284 @@
+{
+  "report_date": "2026-11-20",
+  "project": "alicia-jeff",
+  "supabase_project_ref": "mcnpagbcehupdbhshcea",
+  "base_commit": "8f4e9b7e218c4cfdf08dc8b844802ae45ae0ef57",
+  "release": "finalisation-20261120",
+  "verdict": "Local delivery prepared; no final production sign-off",
+  "operations": {
+    "remote_mutations": 0,
+    "hosted_migrations": 0,
+    "permission_changes": 0,
+    "secrets_modified": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "tests": {
+    "code": {
+      "command": "npm run verify:code",
+      "status": "passed",
+      "server_tests": 7,
+      "api_sql_security_tests": 215,
+      "ux_assertions": 7,
+      "runtime_checks": 16,
+      "frontend_secret_scan_artifacts": 11,
+      "scope": "Isolated database tests plus read-only live Supabase runtime checks"
+    },
+    "browser": {
+      "command": "npm run test:browser",
+      "status": "passed",
+      "checks": 31,
+      "responsive_checks": 24,
+      "widths": [
+        320,
+        375,
+        390,
+        430,
+        768,
+        1024,
+        1280,
+        1440
+      ],
+      "errors": [],
+      "scope": "PGlite real SQL and API; simulated Auth, private Storage transport and official list; no production network",
+      "checked_at": "2026-11-20T14:16:05.493Z"
+    },
+    "concurrency": {
+      "command": "npm run test:concurrency",
+      "status": "passed",
+      "postgres": "16",
+      "same_ticket_results": [
+        "used",
+        "valid"
+      ],
+      "different_tickets_same_person_results": [
+        "used",
+        "valid"
+      ],
+      "independent_connections": true,
+      "hosted_connection": false,
+      "evidence": "Command output observed during this campaign"
+    },
+    "production_dependencies": {
+      "command": "npm audit --omit=dev",
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    "delivery": {
+      "command": "npm run verify:delivery",
+      "status": "passed",
+      "exit_code": 0,
+      "evidence": ".qa-artifacts/finalisation-20261120/verify-delivery-complete.log",
+      "sha256": "d576fd201083d04dfb182ef022332965122d38f8d7d1bbbba8bc669573cb0daf"
+    }
+  },
+  "production_readonly": {
+    "checked_at": "2026-11-20T11:48:26.541Z",
+    "read_only": true,
+    "checks": [
+      {
+        "route": "/api/health",
+        "status": 200,
+        "release": "rsvp-qr-20261119"
+      },
+      {
+        "route": "/api/admin/state",
+        "status": 401,
+        "code": "authentication_required"
+      },
+      {
+        "route": "/api/tickets/verify",
+        "status": 405,
+        "code": "method_not_allowed"
+      },
+      {
+        "route": "/api/souvenirs",
+        "status": 200,
+        "gallery_available": false,
+        "album_count": 0
+      }
+    ]
+  },
+  "cron_readonly": {
+    "checked_at": "2026-11-20T14:00:42.303Z",
+    "method": "GET",
+    "authorization": false,
+    "status": 401,
+    "code": "authentication_required",
+    "mutation_authorized": false
+  },
+  "remote_role_and_gallery_readonly": {
+    "checked_at": "2026-11-20T11:52:57.707Z",
+    "read_only": true,
+    "admin_count": 0,
+    "photographer_count": 1,
+    "gallery_configuration": {
+      "gallery_published": true,
+      "release_at": "2026-12-18T15:00:00+00:00"
+    },
+    "draft_rpc_available": false,
+    "draft_rpc_error": "PGRST202"
+  },
+  "legacy_photo_counts": {
+    "read_only": true,
+    "total_photo_count": 7,
+    "unhidden_photos_in_unpublished_albums": 0,
+    "error_codes": []
+  },
+  "preserved_files": [
+    {
+      "file": ".env.local",
+      "unchanged": true
+    },
+    {
+      "file": "serverless/google-oidc.mjs",
+      "unchanged": true
+    },
+    {
+      "file": "serverless/official-list.mjs",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/001_serverless.sql",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/002_api_only_access.sql",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/003_private_storage_access.sql",
+      "unchanged": true
+    },
+    {
+      "file": "supabase/migrations/004_ticket_entry.sql",
+      "unchanged": true
+    }
+  ],
+  "migration005": {
+    "status": "prepared_not_executed_requires_owner_approval",
+    "new_functions": [
+      "public.wedding_api_upload_complete_draft(uuid,uuid,uuid)",
+      "public.wedding_api_upload_draft_ready()"
+    ],
+    "security": "INVOKER, pinned pg_catalog/pg_temp, EXECUTE service_role only",
+    "changes_existing_data": false,
+    "changes_existing_functions": false,
+    "changes_rls_or_storage": false,
+    "preflight": "supabase/activation/inspect-draft-uploads-readonly.sql",
+    "rollback": "supabase/activation/rollback-draft-uploads.sql",
+    "sha256": "6cdd11593eca2d970c132fe112be716b36df02e63ffd1822dfb7b758e3499d95",
+    "rollback_sha256": "72d4235af490f6c54340add04546c437eb271d5701675c71f0f8cddbe50c2df1"
+  },
+  "limitations": [
+    "Live Google STS/IAM/Sheets success not yet verified in Production",
+    "Real Supabase Auth and Storage upload/publication not exercised with production mutations",
+    "Native phone camera, touch, audible music and full-motion effects require owner validation",
+    "Fresh remote SQL catalog blocked by MCP OAuth token refresh failed: Failed to parse server response",
+    "Signed URLs remain capabilities for up to 600 seconds after hiding a photo",
+    "Diagnostic cooldown per instance; scoped owner grant reusable until short expiry"
+  ],
+  "changed_files": [
+    "MARIAGE-README.md",
+    "docs/FICHIERS-MODIFIES.md",
+    "docs/GOOGLE-SHEETS-LECTURE-PRIVEE.md",
+    "docs/RAPPORT-FINAL.md",
+    "docs/audit/finalisation-20261120.json",
+    "index.html",
+    "package-lock.json",
+    "package.json",
+    "scripts/lib/migration005.mjs",
+    "scripts/prepare-migration005.mjs",
+    "scripts/prepare-owner-probe-grant.mjs",
+    "scripts/serve-built.mjs",
+    "scripts/test-browser.mjs",
+    "scripts/verify-delivery.mjs",
+    "serverless/handler.mjs",
+    "serverless/owner-probe-grant.mjs",
+    "serverless/release.mjs",
+    "serverless/repository.mjs",
+    "src/PhotographerPage.tsx",
+    "src/Root.tsx",
+    "src/components/EnvelopeOpening.tsx",
+    "src/components/OwnerDiagnostics.tsx",
+    "src/components/PhotographerPanel.tsx",
+    "src/components/RsvpSection.tsx",
+    "src/components/Souvenirs.tsx",
+    "src/index.css",
+    "src/lib/api.ts",
+    "src/lib/uploads.ts",
+    "src/main.tsx",
+    "supabase/activation/inspect-draft-uploads-readonly.sql",
+    "supabase/activation/migration005-backup-readonly.sql",
+    "supabase/activation/rollback-draft-uploads.sql",
+    "supabase/migrations/005_draft_uploads.sql",
+    "tests/api.test.mjs",
+    "tests/built-runtime.test.mjs",
+    "tests/database.mjs",
+    "tests/draft-publication.test.mjs",
+    "tests/full-browser-fixture.mjs",
+    "tests/migration005-delivery.test.mjs",
+    "tests/owner-probe-grant.test.mjs",
+    "vercel.json"
+  ],
+  "preexisting_untracked_excluded": [
+    "docs/audit/MCP-CHARGEMENT-20261119.md",
+    "docs/audit/MIGRATION-004-AUDIT-DISTANT-20261119.md",
+    "docs/audit/MIGRATION-004-EXECUTION-20261119.md",
+    "docs/audit/google-sheets-oidc-validation-20261119.json",
+    "docs/audit/mcp-connecteur-diagnostic-20261119.md",
+    "docs/audit/migration004-execution-20261119.json",
+    "docs/audit/migration004-remote-20261119.json",
+    "supabase/activation/004_ticket_entry.mcp-runner.prepared.sql",
+    "supabase/activation/mcp-migration004.config.example.toml"
+  ],
+  "evidence_directory": ".qa-artifacts/finalisation-20261120",
+  "full_report": "docs/RAPPORT-FINAL.md",
+  "final_file_safety": {
+    "checked_at": "2026-11-20T14:32:50.537Z",
+    "inventory_exact": true,
+    "campaign_files": 41,
+    "private_value_matches": 0,
+    "local_env_unchanged": true,
+    "private_paths_ignored": true,
+    "diff_whitespace_check": true
+  },
+  "migration005_preparation": {
+    "checked_at": "2026-11-20T14:32:50.536Z",
+    "status": "prepared_only_no_remote_writes",
+    "targeted_tests": 47,
+    "test_failures": 0,
+    "lint": "passed",
+    "original_sha256": "6cdd11593eca2d970c132fe112be716b36df02e63ffd1822dfb7b758e3499d95",
+    "migration004_sha256": "6308483d162d805f019b607335f128446251e8eec33392102a0c25fe99ab53cf",
+    "new_files": [
+      "scripts/lib/migration005.mjs",
+      "scripts/prepare-migration005.mjs",
+      "supabase/activation/migration005-backup-readonly.sql",
+      "tests/migration005-delivery.test.mjs"
+    ],
+    "backup_tables": 9,
+    "backup_is_consistent_snapshot": true,
+    "actual_production_backup_captured": false,
+    "guard_in_same_transaction": true,
+    "guard_expiration_minutes": 30,
+    "no_automatic_rollback": true,
+    "remote_catalog_error": "OAuth token refresh failed: Failed to parse server response",
+    "procedure": "docs/RAPPORT-FINAL.md",
+    "log": ".qa-artifacts/finalisation-20261120/migration005-preparation-tests.log",
+    "final_validator_tests": {
+      "passed": 3,
+      "failed": 0,
+      "log": ".qa-artifacts/finalisation-20261120/migration005-final-validator-tests.log"
+    },
+    "prepared_private_bundle": ".qa-artifacts/migration005-2026-11-20T14-35-45-711Z",
+    "snapshot_source_sha256": "c647b4a4b0c34bf64f2feb72b0eb7ed0be6b5e91b4ba2b2ea507b61f2720b6c6"
+  }
+}

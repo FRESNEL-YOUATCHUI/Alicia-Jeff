@@ -9,7 +9,7 @@ import {OfficialList} from './official-list.mjs';
 import {oidcRequestDiagnostic} from './google-oidc.mjs';
 import {checkOwnerProbeGrant} from './owner-probe-grant.mjs';
 import {googleSheetsReadiness,GOOGLE_SHEETS_READINESS_HEADERS} from './google-sheets-readiness.mjs';
-import {isLegacyTicket,isTicketReference,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
+import {isLegacyTicket,isTicketReference,isPreview,scanChallenge,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
 import {hashRef} from './repository.mjs';
 const officialList=new OfficialList();
 const ok={ok:true};
@@ -30,17 +30,28 @@ export function createHandler(dependencies){
         if(expected.length!==provided.length||!timingSafeEqual(expected,provided))throw new ApiError(401,'authentication_required','Accès non autorisé.');
       }
       // Missing authentication is always 401, even before server configuration is available.
-      if(route.startsWith('/api/admin/'))bearerToken(req);
+      const ticketJson=route==='/api/tickets/open'&&String(req.headers.accept||'').includes('application/json');
+      const protectedTicket=ticketJson||route==='/api/tickets/verify';
+      if(route==='/api/tickets/verify')requireMethod(req,['POST']);
+      if(route.startsWith('/api/admin/')||protectedTicket)bearerToken(req);
       const deps=dependencies??(()=>{const client=getSupabase();return{repo:new Repository(client),storage:new PhotoStorage(client),authenticate:r=>requireStaff(r,client),rateSecret:serverConfig().key};})();
       const {repo,storage}=deps;
       if(!['GET','HEAD'].includes(req.method))checkOrigin(req);
       let staff;
-      if(route.startsWith('/api/admin/'))staff=await deps.authenticate(req);
+      if(route.startsWith('/api/admin/')||protectedTicket)staff=await deps.authenticate(req);
       const rate=async(scope,limit=30,seconds=900)=>repo.rate(req,scope,limit,seconds,deps.rateSecret);
       let result,status=200;
       if(route==='/api/tickets/open'){
         requireMethod(req,['GET']);
         const token=query.get('token');
+        if(ticketJson){
+          requireMethod(req,['GET']);
+          if(isPreview(req)){sendJson(res,403,{error:'Ouvrez le billet dans votre navigateur.',code:'scan_navigation_required'});return;}
+          if(!isTicketReference(token)){sendJson(res,200,{invalid:true});return;}
+          await rate('ticket-open:'+staff.id,120,60);const challenge=scanChallenge(token,deps.rateSecret);
+          res.setHeader('Set-Cookie','aj_ticket_scan='+challenge.nonce+'; Path=/api/tickets; HttpOnly; SameSite=Strict; Max-Age=90'+(req.headers['x-forwarded-proto']==='https'||req.socket?.encrypted?'; Secure':''));
+          sendJson(res,200,{proof:challenge.proof,invalid:false});return;
+        }
         if(!isTicketReference(token)){sendTicketPage(req,res,{token:'',secret:deps.rateSecret,invalid:true});return;}
         await rate('ticket-open',120,60);
         sendTicketPage(req,res,{token,secret:deps.rateSecret});return;
@@ -103,6 +114,7 @@ export function createHandler(dependencies){
         sendJson(res,diagnostic.status,diagnostic.body,{...GOOGLE_SHEETS_READINESS_HEADERS,...diagnostic.headers});return;
       }else if(route==='/api/admin/state'){
         requireMethod(req,['GET']);result=await repo.adminState();
+        if(query.get('photos_only')==='1')result={albums:result.albums};
         result.draft_uploads_ready=typeof repo.draftUploadsReady==='function'?await repo.draftUploadsReady():false;
         result.albums=await Promise.all(result.albums.map(async a=>({...a,photos:await storage.sign(a.photos)})));
       }else if(route==='/api/admin/messages'){
@@ -149,7 +161,7 @@ export function createHandler(dependencies){
       }else throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       sendJson(res,status,result);
     }catch(error){
-      if(requestRoute==='/api/tickets/open'&&req.method==='GET'){sendTicketPage(req,res,{token:'',secret:'',failed:true});return;}
+      if(requestRoute==='/api/tickets/open'&&req.method==='GET'&&!String(req.headers.accept||'').includes('application/json')){sendTicketPage(req,res,{token:'',secret:'',failed:true});return;}
       if(requestRoute==='/api/tickets/verify'){
         const known=error instanceof ApiError;
         sendJson(res,known?error.status:500,{...ticketResult('error'),code:known?error.code:'verification_unavailable',

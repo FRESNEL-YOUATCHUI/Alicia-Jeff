@@ -4,12 +4,12 @@ export class ApiFailure extends Error {
 export async function api<T>(route:string,options:RequestInit={}):Promise<T>{
   const headers=new Headers(options.headers);
   if(typeof options.body==='string'&&!headers.has('Content-Type'))headers.set('Content-Type','application/json');
-  const admin=route.startsWith('/api/admin/');
+  const admin=route.startsWith('/api/admin/')||route.startsWith('/api/tickets/');
   async function token(refresh=false){
     const {getSupabase}=await import('./supabase');
     const auth=getSupabase().auth;
     const {data,error}=await (refresh?auth.refreshSession():auth.getSession());
-    if(error||!data.session)throw new ApiFailure('Veuillez vous connecter à l’espace photographe.',401,'authentication_required');
+    if(error||!data.session)throw new ApiFailure('Veuillez vous connecter avec un compte du personnel autorisé.',401,'authentication_required');
     headers.set('Authorization','Bearer '+data.session.access_token);
   }
   if(admin)await token();

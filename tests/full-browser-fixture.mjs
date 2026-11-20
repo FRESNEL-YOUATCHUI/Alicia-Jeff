@@ -14,7 +14,7 @@ export async function fullBrowserFixture(){
  await pg.exec("update wedding_settings set gallery_published=true,release_at=now()-interval '1 hour';update wedding_albums set published=true;");
  const sign=(id,expires)=>createHmac('sha256',secret).update(id+':'+expires).digest('hex');
  const storage={
-  async sign(rows){return rows.map(({storage_path:_storagePath,...p})=>{const expires=Date.now()+600000;return{...p,url:url+'/test/photo/'+p.id+'?expires='+expires+'&sig='+sign(p.id,expires),expires_at:new Date(expires).toISOString()};});},
+  async sign(rows,{download=false}={}){return rows.map(({storage_path:_storagePath,...p})=>{const expires=Date.now()+600000;return{...p,url:url+'/test/photo/'+p.id+'?expires='+expires+'&sig='+sign(p.id,expires)+(download?'&download=1':''),expires_at:new Date(expires).toISOString()};});},
   async uploadToken(u){return{bucket:'wedding-photos',path:u.storage_path,token:'isolated-upload-token'};},
   async verify(u){const file=objects.get(u.storage_path);if(!file)throw new ApiError(409,'upload_incomplete','Import absent.');if(file.data.length!==u.size||file.type!==u.content_type)throw new ApiError(415,'photo_mismatch','Image non conforme.');inspectImage(file.data.subarray(0,131072),file.data.subarray(-12),file.data.length,file.type);},
   async remove(paths){paths.forEach(p=>objects.delete(p));}
@@ -30,10 +30,10 @@ export async function fullBrowserFixture(){
   if(route.pathname.startsWith('/test/photo/')){
    const id=route.pathname.split('/').at(-1),expires=Number(route.searchParams.get('expires'));
    if(expires<Date.now()||route.searchParams.get('sig')!==sign(id,expires))throw Error();
-   const row=(await pg.query('select storage_path from wedding_photos where id=$1',[id])).rows[0],image=objects.get(row?.storage_path);if(!image)throw Error();res.writeHead(200,{'Content-Type':image.type,'Cache-Control':'private, no-store'});res.end(image.data);return;
+   const row=(await pg.query('select storage_path from wedding_photos where id=$1',[id])).rows[0],image=objects.get(row?.storage_path);if(!image)throw Error();res.writeHead(200,{'Content-Type':image.type,'Cache-Control':'private, no-store',...(route.searchParams.get('download')==='1'?{'Content-Disposition':'attachment; filename=photographie.png'}:{})});res.end(image.data);return;
   }
   if(route.pathname==='/wedding/invitation.png'&&cardFailures>0){cardFailures--;res.writeHead(503);res.end();return;}
-  const pathname=route.pathname==='/'||route.pathname==='/photographe'||route.pathname==='/photographe/'?'/index.html':route.pathname;
+  const pathname=route.pathname==='/'||route.pathname==='/photographe'||route.pathname==='/photographe/'||route.pathname==='/entree'||route.pathname==='/entree/'?'/index.html':route.pathname;
   const p=path.resolve(root,'.'+decodeURIComponent(pathname));if(!p.startsWith(root+path.sep))throw Error();const data=await fs.readFile(p);res.writeHead(200,{'Content-Type':mime[path.extname(p)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
  }catch{if(!res.headersSent)res.writeHead(404);res.end();}});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));url='http://127.0.0.1:'+server.address().port;

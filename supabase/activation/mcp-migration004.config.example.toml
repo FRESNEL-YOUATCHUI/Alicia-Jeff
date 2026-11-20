@@ -1,0 +1,7 @@
+# Préparation locale uniquement. Aucun serveur d'écriture n'est activé par ce fichier.
+# Ne pas modifier supabase_alicia_jeff_readonly.
+# Au moment de l'intervention : contrôler l'accès OAuth et découvrir les outils réellement exposés.
+[mcp_servers.supabase_alicia_jeff_migration004]
+url = "https://mcp.supabase.com/mcp?project_ref=mcnpagbcehupdbhshcea&read_only=false&features=database"
+enabled = false
+enabled_tools = ["list_tables", "list_migrations", "execute_sql", "apply_migration"]

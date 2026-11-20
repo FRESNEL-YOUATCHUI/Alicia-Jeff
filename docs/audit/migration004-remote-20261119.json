@@ -1,0 +1,239 @@
+{
+  "project_ref": "mcnpagbcehupdbhshcea",
+  "connection": [
+    {
+      "name": "supabase_alicia_jeff_readonly",
+      "authStatus": "oAuth",
+      "runtimeStatus": "connected",
+      "toolsError": null,
+      "serverInfo": {
+        "name": "supabase",
+        "title": "Supabase",
+        "version": "0.17.0",
+        "description": null,
+        "icons": null,
+        "websiteUrl": null
+      },
+      "tools": [
+        "list_migrations",
+        "list_extensions",
+        "execute_sql",
+        "list_tables"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "name": "public.wedding_albums",
+      "rls_enabled": true,
+      "rows": 3
+    },
+    {
+      "name": "public.wedding_photos",
+      "rls_enabled": true,
+      "rows": 7
+    },
+    {
+      "name": "public.wedding_settings",
+      "rls_enabled": true,
+      "rows": 1
+    },
+    {
+      "name": "public.wedding_staff",
+      "rls_enabled": true,
+      "rows": 1
+    },
+    {
+      "name": "public.wedding_rsvps",
+      "rls_enabled": true,
+      "rows": 3
+    },
+    {
+      "name": "public.wedding_messages",
+      "rls_enabled": true,
+      "rows": 2
+    },
+    {
+      "name": "public.wedding_api_limits",
+      "rls_enabled": true,
+      "rows": 7
+    },
+    {
+      "name": "public.wedding_api_uploads",
+      "rls_enabled": true,
+      "rows": 7
+    }
+  ],
+  "migration_history": [],
+  "migration_history_table_exists": false,
+  "migration004": {
+    "remote_state": "not_installed",
+    "ticket_table_exists": false,
+    "ticket_function_count": 0,
+    "original_sha256": "6308483d162d805f019b607335f128446251e8eec33392102a0c25fe99ab53cf",
+    "runner_sha256": "25ea91124345bd646c7a242db3c1ee53c51be5dcafe3629a7d1112e27339f233",
+    "only_outer_begin_commit_removed": true,
+    "runner_executed": false,
+    "write_connection_activated": false
+  },
+  "preflight": {
+    "roles": [
+      {
+        "name": "authenticated",
+        "superuser": false,
+        "bypass_rls": false
+      },
+      {
+        "name": "anon",
+        "superuser": false,
+        "bypass_rls": false
+      },
+      {
+        "name": "service_role",
+        "superuser": false,
+        "bypass_rls": true
+      }
+    ],
+    "executor": "supabase_read_only_user",
+    "read_only": "on",
+    "captured_at": "2026-11-19T11:33:03.82274+00:00",
+    "dependencies": [
+      {
+        "config": [
+          "search_path=pg_catalog, pg_temp"
+        ],
+        "signature": "wedding_api_rate(text,integer,integer)",
+        "anon_execute": false,
+        "service_execute": true,
+        "security_definer": false,
+        "authenticated_execute": false
+      },
+      {
+        "config": [
+          "search_path=pg_catalog, pg_temp"
+        ],
+        "signature": "wedding_api_rsvp(jsonb)",
+        "anon_execute": false,
+        "service_execute": true,
+        "security_definer": false,
+        "authenticated_execute": false
+      }
+    ],
+    "business_tables": [
+      {
+        "rls": true,
+        "name": "wedding_albums",
+        "owner": "postgres",
+        "policies": 1,
+        "row_security_active": false
+      },
+      {
+        "rls": true,
+        "name": "wedding_messages",
+        "owner": "postgres",
+        "policies": 0,
+        "row_security_active": false
+      },
+      {
+        "rls": true,
+        "name": "wedding_photos",
+        "owner": "postgres",
+        "policies": 1,
+        "row_security_active": false
+      },
+      {
+        "rls": true,
+        "name": "wedding_rsvps",
+        "owner": "postgres",
+        "policies": 0,
+        "row_security_active": false
+      },
+      {
+        "rls": true,
+        "name": "wedding_settings",
+        "owner": "postgres",
+        "policies": 0,
+        "row_security_active": false
+      },
+      {
+        "rls": true,
+        "name": "wedding_staff",
+        "owner": "postgres",
+        "policies": 1,
+        "row_security_active": false
+      }
+    ],
+    "rsvp_primary_id": true,
+    "new_table_absent": true,
+    "required_columns": [
+      {
+        "name": "id",
+        "present": true,
+        "actual_type": "uuid",
+        "expected_type": "uuid"
+      },
+      {
+        "name": "ref_hash",
+        "present": true,
+        "actual_type": "character varying(64)",
+        "expected_type": "text"
+      },
+      {
+        "name": "first_name",
+        "present": true,
+        "actual_type": "character varying(80)",
+        "expected_type": "text"
+      },
+      {
+        "name": "last_name",
+        "present": true,
+        "actual_type": "character varying(80)",
+        "expected_type": "text"
+      },
+      {
+        "name": "created_at",
+        "present": true,
+        "actual_type": "timestamp with time zone",
+        "expected_type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "present": true,
+        "actual_type": "timestamp with time zone",
+        "expected_type": "timestamp with time zone"
+      }
+    ],
+    "anon_schema_create": false,
+    "new_functions_count": 0,
+    "rsvp_unique_ref_hash": true,
+    "service_role_bypass_rls": true,
+    "authenticated_schema_create": false
+  },
+  "backup": {
+    "captured_at": "2026-11-19T11:33:04.118284+00:00",
+    "backupPath": "C:\\Users\\Hp EliteBook\\Downloads\\alicia-jeff-site-local-v3\\.qa-artifacts\\mcp-migration004-20261119\\pre004-snapshot-private.json",
+    "sha256": "31eff939f62f4dc5203ff7f22c7fd7f2c76a0b02429ecde412eed6db12758d71",
+    "schema_tables": 8,
+    "functions": 20,
+    "business_rows": {
+      "wedding_rsvps": 3,
+      "wedding_staff": 1,
+      "wedding_albums": 3,
+      "wedding_photos": 7,
+      "wedding_messages": 2,
+      "wedding_settings": 1
+    },
+    "fingerprints": {
+      "wedding_rsvps": "5c9922b5c7a0ccbd9cbdbe16386121fc",
+      "wedding_staff": "ae0c59ddae0dc654dc09d8e765c28252",
+      "wedding_albums": "68cb8377b6d988f8d2267f5c8a7fa015",
+      "wedding_photos": "9eb6896bfc17d0fc16203d469ba2a1c5",
+      "wedding_messages": "a8b289e9a038a4d970bbb147ee721395",
+      "wedding_settings": "c7338e86087e5566384a12c9ffdc62c4"
+    },
+    "metadata_only_storage": true,
+    "auth_data_exported": false
+  },
+  "rollback_sha256": "a67d83a3096d39f8578077835d7bb007c5e3056bd1b76abc54d631143db15d73",
+  "writes_executed": 0
+}

@@ -55,6 +55,7 @@ export function sendTicketPage(req,res,{token,secret,invalid=false,failed=false}
  "}catch{failure();}}",
  "if(input.failed){failure();}else if(input.invalid){title.textContent='BILLET NON RECONNU';detail.textContent='Identifiant invalide. Entrée non autorisée.';action.hidden=true;}",
  "else if(input.blocked){title.textContent='APERÇU DU BILLET';detail.textContent='Aucune entrée enregistrée. Ouvrez le lien dans votre navigateur.';action.hidden=true;}",
+ "else if(!input.blocked){location.replace('/entree?token='+encodeURIComponent(input.token));}",
  "else{action.addEventListener('click',event=>{if(event.isTrusted)void verify();});",
  "if(input.automatic){let timer;const resume=()=>{clearTimeout(timer);if(document.visibilityState==='visible'&&!document.prerendering&&document.hasFocus())timer=setTimeout(()=>void verify(),700);};document.addEventListener('visibilitychange',resume);window.addEventListener('focus',resume);document.addEventListener('prerenderingchange',resume);resume();}}"
  ].join('\n');

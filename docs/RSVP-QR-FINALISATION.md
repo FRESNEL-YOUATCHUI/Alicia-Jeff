@@ -118,8 +118,8 @@ Aucune valeur de `.env.local` n'a été modifiée. `.env.example` contient les n
 À configurer vous-même, localement puis dans Vercel, exclusivement côté serveur :
 - `GOOGLE_SHEETS_SPREADSHEET_ID` : `1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0`.
 - `GOOGLE_SHEETS_RANGE` : `'Invités'!A2:A10001`.
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL` : compte de service Google dédié.
-- `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` : sa clé privée, jamais dans le chat, Git ou une variable `VITE_`.
+- Authentification actuelle : OIDC Vercel → STS → IAM Credentials, sans clé privée Google.
+- Paramètres GCP_* serveur et restriction Production : voir docs/GOOGLE-SHEETS-LECTURE-PRIVEE.md.
 - `GUEST_NAME_ORDER=mixed` est facultatif : c'est déjà le comportement par défaut.
 
 Activer Google Sheets API dans le projet Google du compte de service. Partager uniquement cette feuille avec lui, en lecture ; ne pas ouvrir tout votre Drive.

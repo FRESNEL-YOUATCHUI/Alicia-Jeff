@@ -153,7 +153,7 @@ test('admission HTTP + real isolated PostgreSQL, no hosted data',async t=>{
  }finally{await new Promise(resolve=>server.close(resolve));await pg.close();}
 });
 test('private Google Sheets reader: exact normalization, no fuzzy or reordered matching, no stale cache',async()=>{
- const env={GUEST_NAME_ORDER:'first_last',GOOGLE_SHEETS_SPREADSHEET_ID:'test-only-sheet-1234567890',GOOGLE_SHEETS_RANGE:"'Invités'!A2:A10001",GOOGLE_SERVICE_ACCOUNT_EMAIL:'test@example.invalid',GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY:'not-a-real-key'};
+ const env={GUEST_NAME_ORDER:'first_last',GOOGLE_SHEETS_SPREADSHEET_ID:'test-only-sheet-1234567890',GOOGLE_SHEETS_RANGE:"'Invités'!A2:A10001"};
  let calls=0,status=200,rows=[['Élodie Ndiaye']],headersSeen;
  const list=new OfficialList({env,authFactory:()=>({getRequestHeaders:async()=>new Headers({Authorization:'Bearer isolated-test'})}),
   fetchImpl:async(url,options)=>{assert.ok(url.startsWith('https://sheets.googleapis.com/'));headersSeen=options.headers;calls++;return new Response(JSON.stringify({values:rows}),{status});}});
@@ -197,7 +197,7 @@ test('mixed name order compares two exact forms and rejects reversed-name ambigu
 });
 
 test('Google Sheets provider defaults to mixed order and returns the exact matched roster key',async()=>{
- const env={GOOGLE_SHEETS_SPREADSHEET_ID:'test-only-sheet-1234567890',GOOGLE_SHEETS_RANGE:"'Invités'!A2:A10001",GOOGLE_SERVICE_ACCOUNT_EMAIL:'test@example.invalid',GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY:'not-a-real-key'};
+ const env={GOOGLE_SHEETS_SPREADSHEET_ID:'test-only-sheet-1234567890',GOOGLE_SHEETS_RANGE:"'Invités'!A2:A10001"};
  const list=new OfficialList({env,authFactory:()=>({getRequestHeaders:async()=>new Headers()}),fetchImpl:async()=>new Response(JSON.stringify({values:[['NDIAYE Élodie']]}))});
  assert.deepEqual(await list.match({first_name:'Elodie',last_name:'Ndiaye'}),{status:'recognized',name:'ndiaye elodie'});
 });

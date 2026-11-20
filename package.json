@@ -26,10 +26,12 @@
     "prepare:rollback": "node scripts/prepare-activation-rollback.mjs",
     "test:concurrency": "node scripts/test-ticket-concurrency.mjs",
     "inspect:tickets": "node scripts/inspect-ticket-readiness.mjs",
-    "verify:code": "node scripts/verify.mjs --code-only"
+    "verify:code": "node scripts/verify.mjs --code-only",
+    "test:oidc": "node --test tests/google-oidc.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "@vercel/oidc": "4.0.9",
     "google-auth-library": "^10.9.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.446.0",

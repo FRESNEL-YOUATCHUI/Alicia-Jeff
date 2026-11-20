@@ -1,67 +1,184 @@
-# Connecter le serveur à la feuille privée des invités
+# Google Sheets privée — authentification OIDC sans clé
 
-Le projet ne dispose pas actuellement des deux variables d'authentification Google requises.
-La connexion Google Drive de Codex permet de lire la feuille dans cette conversation ; elle ne connecte pas le serveur local ou Vercel.
+Le backend utilise la fédération Vercel → Google STS → IAM Credentials → Google Sheets.
+Aucune clé JSON, clé privée Google ou délégation à l’ensemble du domaine n’est nécessaire.
+Aucun identifiant Google ni jeton n’est envoyé au frontend.
 
-La feuille et l'onglet sont déjà configurés côté serveur :
-- Feuille : https://docs.google.com/spreadsheets/d/1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0/edit
-- Onglet : Invités.
-- Colonne A, à partir de la deuxième ligne ; l'en-tête est exclu.
-- Ordre mixte des noms ; égalité exacte après normalisation, ambiguïtés refusées.
-- Aucune modification de partage n'a été effectuée.
+## Identité de production confirmée
 
-## 1. Compte de service
+- Projet Google Cloud : alicia-jeff-mariage.
+- Numéro technique : 691833411750.
+- Pool technique : alicia-jeff-vercel.
+- Fournisseur technique : vercel-alicia-jeff.
+- Ressource : projects/691833411750/locations/global/workloadIdentityPools/alicia-jeff-vercel/providers/vercel-alicia-jeff.
+- Compte de service : alicia-jeff-invites@alicia-jeff-mariage.iam.gserviceaccount.com.
+- Émetteur : https://oidc.vercel.com/dev-full1.
+- Audience du jeton Vercel : https://vercel.com/dev-full1.
+- Sujet exact : owner:dev-full1:project:alicia-jeff:environment:production.
 
-Dans Google Cloud Console, choisir/créer le projet dédié puis activer Google Sheets API.
-Dans IAM et administration > Comptes de service, créer un compte dédié, par exemple alicia-jeff-lecture-invites.
-Aucun rôle Propriétaire ou Éditeur du projet Google Cloud n'est nécessaire pour lire cette feuille.
-Ne pas activer de délégation à l'ensemble du domaine.
+Ces identifiants techniques ont été fournis comme vérifiés par le propriétaire.
+L’agent ne modifie ni leurs permissions ni leur configuration Google Cloud.
 
-Référence : [identifiants Google Workspace](https://developers.google.com/workspace/guides/create-credentials).
+L’audience STS est différente de l’audience du jeton Vercel :
+`//iam.googleapis.com/projects/691833411750/locations/global/workloadIdentityPools/alicia-jeff-vercel/providers/vercel-alicia-jeff`.
 
-## 2. Identifiants privés
+## Configuration serveur
 
-Si la politique de votre organisation l'autorise, créer une clé JSON du compte de service.
-Cette opération est à effectuer par vous : l'agent ne crée ni ne modifie de clé.
-Garder le fichier hors du dépôt ; ne pas le déposer dans public/, src/, Git ou le chat.
-Si la création de clés est interdite par l'organisation, ne pas désactiver cette protection : demander à l'administrateur une méthode d'identification approuvée.
+Les valeurs vérifiées ci-dessous ont des valeurs par défaut côté serveur dans serverless/google-oidc.mjs.
+Les variables sont facultatives ; si elles sont définies, elles doivent correspondre exactement aux valeurs vérifiées.
+Aucun changement de .env.local n’est réalisé automatiquement.
 
-Référence : [création des clés de compte de service](https://docs.cloud.google.com/iam/docs/keys-create-delete).
+| Variable | Valeur non secrète attendue |
+| --- | --- |
+| GCP_PROJECT_ID | alicia-jeff-mariage |
+| GCP_PROJECT_NUMBER | 691833411750 |
+| GCP_WORKLOAD_IDENTITY_POOL_ID | alicia-jeff-vercel |
+| GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID | vercel-alicia-jeff |
+| GCP_SERVICE_ACCOUNT_EMAIL | alicia-jeff-invites@alicia-jeff-mariage.iam.gserviceaccount.com |
 
-## 3. Lecture de la seule feuille
+La feuille existante et la plage ont leurs valeurs par défaut côté serveur :
+- Feuille officielle déjà utilisée par le projet ; aucune nouvelle feuille n’est créée.
+- Onglet Invités, colonne A avec l’en-tête Nom complet.
+- GOOGLE_SHEETS_SPREADSHEET_ID et GOOGLE_SHEETS_RANGE peuvent remplacer la cible côté serveur.
+- GUEST_NAME_ORDER vaut mixed par défaut : deux ordres exacts acceptés, ambiguïtés refusées.
 
-Dans le bouton Partager de la feuille, ajouter l'adresse client_email du compte de service en rôle Lecteur.
-C'est une modification d'accès : elle reste à votre décision/autorisation. L'agent ne l'effectuera pas sans votre accord.
-Conserver Accès général : Accès limité. Ne pas publier sur le Web.
-Les rôles IAM Google Cloud ne donnent pas à eux seuls accès à une feuille Google Workspace.
+Les variables système VERCEL=1 et VERCEL_ENV=production sont requises.
+Le SDK @vercel/oidc obtient le jeton dans le contexte de la requête.
+Ne pas copier de jeton dans le chat, dans Git ou dans une variable VITE_.
+Ne pas renseigner manuellement un jeton permanent pour remplacer le contexte de production.
 
-## 4. Variables du backend
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY n’est plus utilisée : aucun mode JWT à clé privée ni fallback ADC n’est exécuté.
+La connexion Google Drive de Codex sert à l’audit et n’authentifie pas le backend.
 
-Vous renseignez vous-même ces deux variables, sans transmettre leurs valeurs dans cette conversation :
-- GOOGLE_SERVICE_ACCOUNT_EMAIL : valeur client_email du JSON.
-- GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY : valeur private_key du JSON.
+## Chaîne d’authentification
 
-En local : variables de l'environnement du processus serveur ou .env.local privé.
-Sur Vercel : Settings > Environment Variables, dans les environnements à tester.
-La clé peut contenir de vrais sauts de ligne ou les séquences littérales backslash-n ; les deux formes sont prises en charge.
-Ne mettre aucun préfixe VITE_ : ces identifiants ne doivent jamais être incorporés au frontend.
+1. Le lecteur est appelé uniquement à la vérification du billet, jamais pendant le RSVP.
+2. Le SDK obtient une assertion Vercel fraîche pendant la requête, sans audience personnalisée.
+3. Le backend rejette les identités non conformes et les dates invalides. Le décodage local du JWT n’est pas une vérification de signature : Google STS effectue la validation cryptographique.
+4. STS reçoit l’assertion et l’audience IAM numérique. Le scope intermédiaire cloud-platform est requis pour appeler IAM Credentials ; il n’est pas utilisé pour lire Sheets.
+5. IAM Credentials émet un jeton du compte de service avec uniquement spreadsheets.readonly et une durée demandée de 600 secondes.
+6. Ce jeton temporaire autorise la lecture privée de la colonne A.
 
-L'identifiant et la plage ont déjà des valeurs par défaut côté serveur. Les variables GOOGLE_SHEETS_SPREADSHEET_ID et GOOGLE_SHEETS_RANGE restent facultatives pour les remplacer.
-La plage par défaut est 'Invités'!A2:A. La lecture est limitée côté serveur à 10 000 lignes et 2 Mio.
-Le seul scope utilisé est spreadsheets.readonly. Le compte ne doit avoir accès qu'aux fichiers nécessaires.
+Les endpoints sont fixes, les redirections refusées, les réponses d’authentification limitées à 64 Kio.
+L’obtention du jeton Vercel et les deux échanges Google partagent un délai global de sept secondes.
+La lecture Sheets conserve ses limites de huit secondes, 10 000 lignes et 2 Mio.
+Aucun jeton ni résultat de liste n’est conservé entre scans ; aucune erreur Google brute n’est renvoyée au navigateur.
 
-Références : [scopes Sheets](https://developers.google.com/workspace/sheets/api/scopes), [notation A1](https://developers.google.com/workspace/sheets/api/guides/concepts).
+## Restrictions conservées
 
-## 5. Validation
+Les environnements local, Development et Preview sont refusés par ce mode d’authentification.
+Ne pas modifier le sujet Google Cloud ou simuler VERCEL_ENV=production en local pour contourner ce refus.
+Le site et le RSVP restent utilisables sans accès à Sheets ; le contrôle d’entrée refuse l’autorisation si la liste ne peut pas être lue.
+La correspondance reste exacte après normalisation de casse, espaces et accents. Les doublons/homonymes sont refusés.
+La feuille reste en accès limité, avec le compte de service Lecteur. Ne pas publier sur le Web.
 
-Redémarrer le serveur après configuration des variables.
-Exécuter npm run inspect:tickets : sheet.ready doit être true.
-Cette commande ne confirme personne et n'enregistre aucune entrée.
-Elle restera en échec si la migration 004 manque, si la clé est invalide ou si la feuille n'est pas partagée avec le compte de service.
+## Validation locale
 
-npm run verify contrôle désormais aussi cette connexion réelle et le schéma QR.
-npm run verify:code contrôle seulement le code, le build et le runtime existant ; sa réussite n'annonce pas la mise en service de la vérification des billets.
+- npm run test:oidc : tests du SDK et du protocole avec transports simulés ; aucune identité de production utilisée.
+- npm test : régression du RSVP, des billets et des règles de scan sur une base isolée.
+- npm run verify:code : vérifications du code et du runtime, sans annoncer une validation Google réelle.
+- npm run inspect:tickets : lecture de configuration et contrôle du schéma ; en local, sheet.code=production_identity_required est attendu et le code de sortie est 2.
+- npm run verify inclut inspect:tickets : il ne doit pas annoncer une connexion Google opérationnelle depuis un environnement non autorisé.
 
-Aucun secret existant ni aucune autorisation de partage n'a été modifié par l'agent.
+Les tests ne modifient ni Supabase hébergé ni Google Cloud.
 
-Les QR utilisent l'adresse publique https://alicia-jeff.vercel.app, même si le billet est téléchargé en local. La production doit donc contenir les correctifs et la migration doit être activée avant de distribuer ces billets.
+## Vérifications manuelles avant mise en service
+
+1. Dans le projet Vercel alicia-jeff de l’équipe dev-full1, vérifier que la fédération OIDC est activée, avec l’émetteur d’équipe attendu et les variables système exposées aux fonctions.
+2. Vérifier les éventuelles variables GCP_* de Production : aucune valeur contradictoire avec les identifiants vérifiés. Aucun secret Google permanent à ajouter.
+3. Confirmer que les API Sheets, STS et IAM Credentials sont toujours actives et que le compte de service reste Lecteur de la feuille privée.
+4. Effectuer personnellement le push et le déploiement lorsque souhaité.
+5. Après ce déploiement, commencer par le diagnostic HTTP OIDC protégé décrit ci-dessous : aucun billet n’est consommé. Une validation Google réelle reste un contrôle distinct ; ne pas utiliser un scan de billet reconnu comme simple contrôle de santé.
+6. Vérifier qu’un refus Google n’autorise jamais l’entrée et qu’un invité absent peut toujours confirmer son RSVP.
+
+Aucun déploiement ni test réel d’admission n’est effectué automatiquement par cette adaptation.
+
+## Diagnostic HTTP OIDC protégé
+
+GET /api/admin/oidc-readiness utilise exactement la même autorisation que /api/admin/state :
+jeton Bearer vérifié par Supabase Auth (getUser), puis lecture du rôle wedding_staff.
+Les rôles admin et photographer sont acceptés. Aucun accès anonyme ni simple rôle authenticated.
+L’absence de jeton renvoie 401 ; un compte sans rôle autorisé renvoie 403.
+
+La réponse autorisée est HTTP 200 avec seulement neuf booléens. Les erreurs d’authentification
+conservent le format HTTP existant. Cache-Control vaut private, no-store. Seule la méthode GET est autorisée.
+
+| Indicateur | Signification |
+| --- | --- |
+| vercel_variable_present | VERCEL est définie comme chaîne, même si sa valeur est incorrecte. |
+| vercel_flag_valid | VERCEL vaut exactement 1. |
+| vercel_env_variable_present | VERCEL_ENV est définie comme chaîne. |
+| production_environment | VERCEL_ENV vaut exactement production. |
+| google_configuration_valid | Les éventuelles valeurs GCP ne contredisent pas les identifiants vérifiés. |
+| request_oidc_token_present | La requête Node contient l’en-tête OIDC attendu. |
+| sdk_token_accessible | Le SDK lit le même jeton que celui de cette requête. |
+| identity_claims_match | Les claims d’identité et les dates correspondent aux contrôles de l’adaptateur. |
+| ready | Toutes les conditions précédentes sont satisfaites. |
+
+Le SDK n’est pas sollicité en local, en Preview/Development, si VERCEL est incorrecte ou si l’en-tête
+OIDC manque. Dans ces cas, sdk_token_accessible et identity_claims_match restent false.
+Le diagnostic emploie getVercelOidcTokenSync dans le contexte courant, sans renouvellement CLI,
+lecture de fichier de jeton, échange STS, appel IAM ni lecture Sheets. Un jeton d’environnement seul
+ne suffit pas : son absence dans la requête, ou une différence avec celui lu par le SDK, rend ready false.
+Aucun jeton ni erreur SDK brute n’est journalisé ou renvoyé.
+
+identity_claims_match est un précontrôle local ; ce n’est pas une vérification cryptographique de signature.
+ready ne prouve pas les permissions Google ou la lecture effective de Sheets. Google STS conserve son rôle
+de validation lors du vrai contrôle du billet. Le diagnostic n’appelle aucun RPC métier, compteur de débit,
+RSVP ou fonction d’admission. Supabase n’est utilisé que pour vérifier la session et lire le rôle.
+
+### Procédure exacte après votre déploiement
+
+1. Ouvrir https://alicia-jeff.vercel.app/ puis Souvenirs → Images → Espace photographe.
+2. Se connecter avec le compte existant admin ou photographer. Rester sur cette même origine.
+3. Ouvrir les outils de développement du navigateur, onglet Console.
+4. Exécuter le bloc ci-dessous. Il utilise la session déjà stockée par le client Supabase du site,
+   sans afficher, copier ou demander le jeton. Ne jamais coller de clé serveur ou de jeton dans le chat.
+
+```javascript
+(async () => {
+  const raw = localStorage.getItem('sb-mcnpagbcehupdbhshcea-auth-token');
+  const session = raw ? JSON.parse(raw) : null;
+  if (!session?.access_token) { console.info('Connectez-vous à l’espace photographe.'); return; }
+  const response = await fetch('/api/admin/oidc-readiness', {
+    method: 'GET', cache: 'no-store', credentials: 'same-origin',
+    headers: { Authorization: 'Bearer ' + session.access_token }
+  });
+  if (!response.ok) { console.info('Diagnostic refusé ou indisponible : HTTP ' + response.status); return; }
+  const data = await response.json();
+  const fields = ['vercel_variable_present', 'vercel_flag_valid', 'vercel_env_variable_present',
+    'production_environment', 'google_configuration_valid', 'request_oidc_token_present',
+    'sdk_token_accessible', 'identity_claims_match', 'ready'];
+  if (Object.keys(data).length !== fields.length || !fields.every(k => typeof data[k] === 'boolean')) {
+    console.info('Réponse inattendue : aucun contenu affiché.'); return;
+  }
+  console.table(Object.fromEntries(fields.map(k => [k, data[k]])));
+})().catch(() => console.info('Diagnostic impossible ; reconnectez-vous et réessayez.'));
+```
+
+5. En Production correctement configurée, les neuf indicateurs doivent être true.
+   Si vercel_variable_present ou vercel_env_variable_present est false, les variables système
+   ne sont pas présentes dans la fonction. Si les variables existent mais les contrôles correspondants
+   sont false, leur valeur n’est pas celle attendue. Ne pas les fabriquer manuellement.
+6. Si request_oidc_token_present ou sdk_token_accessible est false malgré l’environnement autorisé,
+   vérifier l’injection OIDC de la fonction. Si identity_claims_match est false, vérifier l’émetteur,
+   l’audience et le sujet configurés, sans afficher les claims ou assouplir les restrictions.
+7. Un accès direct à /api/admin/oidc-readiness dans la barre d’adresse renvoie normalement 401 :
+   la session locale n’ajoute pas automatiquement un en-tête Authorization à cette navigation.
+8. Après déconnexion, cet accès direct doit toujours renvoyer 401.
+
+Cette procédure ne confirme aucune présence et ne consomme aucun billet. Elle ne nécessite
+aucun billet réel, aucune modification de la feuille et aucune écriture Supabase par le diagnostic.
+En cas de 401 dans la console, se reconnecter puis relancer ; en cas de 403, vérifier le rôle existant.
+Les tokens, en-têtes Authorization et contenus de stockage du navigateur ne doivent jamais être partagés.
+
+Tests locaux spécifiques : node --test tests/oidc-diagnostic.test.mjs.
+Ils simulent le contexte Vercel et les réponses Auth/rôles ; aucun déploiement ou test réel Production
+n’est exécuté par ces tests.
+
+Références officielles :
+- https://vercel.com/docs/oidc/reference
+- https://vercel.com/docs/oidc/gcp
+- https://cloud.google.com/iam/docs/reference/sts/rest/v1/TopLevel/token
+- https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
+- https://developers.google.com/workspace/sheets/api/scopes

@@ -75,7 +75,7 @@ test('generated activation and read-only backup match their audited local source
   const raw=await fs.readFile(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
   assert.ok(activation.includes('SHA256 '+createHash('sha256').update(raw.replace(/\r\n/g,'\n')).digest('hex')));
  }
- const sql=await fs.readFile(new URL('../supabase/activation/preflight-backup-readonly.sql',import.meta.url),'utf8');assert.ok(sql.includes(snapshotQuery()));assert.match(sql,/repeatable read read only/);assert.match(sql,/set local row_security=off/);
+ const sql=await fs.readFile(new URL('../supabase/activation/preflight-backup-readonly.sql',import.meta.url),'utf8');assert.ok(sql.replace(/\r\n/g,'\n').includes(snapshotQuery().replace(/\r\n/g,'\n')));assert.match(sql,/repeatable read read only/);assert.match(sql,/set local row_security=off/);
 });
 test('rollback refuses a baseline with RLS disabled rather than preparing a security downgrade',async()=>{
  const pg=await init();try{const before=await snapshot(pg);before.tables[0].rls=false;await assert.rejects(()=>buildRollback(before),/ownership\/coverage/);}finally{await pg.close();}

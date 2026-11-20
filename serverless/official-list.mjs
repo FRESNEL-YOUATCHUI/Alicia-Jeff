@@ -1,4 +1,4 @@
-import {JWT} from 'google-auth-library';
+import {createGoogleSheetsAuth} from './google-oidc.mjs';
 import {ApiError} from './http.mjs';
 export const normalizeGuestName=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLowerCase().trim().replace(/\s+/gu,' ');
 export const DEFAULT_SHEET_ID='1mikI1pPvSK0CvslUlUKlwROowJBP5Q9FCzGiZ9ucUB0';
@@ -23,19 +23,15 @@ export function inspectOfficialRows(rows,candidates){
 }
 export const matchOfficialRows=(rows,names)=>inspectOfficialRows(rows,names).status;
 export class OfficialList {
- constructor({env=process.env,fetchImpl=fetch,authFactory=options=>new JWT(options)}={}){
+ constructor({env=process.env,fetchImpl=fetch,authFactory=createGoogleSheetsAuth}={}){
   this.env=env;this.fetch=fetchImpl;this.authFactory=authFactory;
  }
  async match(guest){
   const env=this.env,names=officialNames(guest,env.GUEST_NAME_ORDER||'mixed');
   const id=env.GOOGLE_SHEETS_SPREADSHEET_ID||DEFAULT_SHEET_ID,range=env.GOOGLE_SHEETS_RANGE||DEFAULT_SHEET_RANGE;
-  if(!id||!/^[A-Za-z0-9_-]{20,200}$/.test(id)||!range||!/^'[^']{1,100}'!A2:A(?:10001)?$/.test(range)
-    ||!env.GOOGLE_SERVICE_ACCOUNT_EMAIL||!env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY)throw unavailable();
+  if(!id||!/^[A-Za-z0-9_-]{20,200}$/.test(id)||!range||!/^'[^']{1,100}'!A2:A(?:10001)?$/.test(range))throw unavailable();
   try{
-   this.auth??=this.authFactory({email:env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key:env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g,'\n'),
-    scopes:['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    transporterOptions:{timeout:5000,retry:false}});
+   this.auth??=this.authFactory({env});
    const url='https://sheets.googleapis.com/v4/spreadsheets/'+id+'/values/'+encodeURIComponent(range)+'?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS';
    const headers=await this.auth.getRequestHeaders(url);
    const response=await this.fetch(url,{headers,signal:AbortSignal.timeout(8000),cache:'no-store',redirect:'error'});

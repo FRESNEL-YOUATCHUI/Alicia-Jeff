@@ -5,6 +5,7 @@ import {getSupabase,requireStaff,serverConfig,bearerToken} from './supabase.mjs'
 import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
 import {OfficialList} from './official-list.mjs';
+import {oidcRequestDiagnostic} from './google-oidc.mjs';
 import {isLegacyTicket,isTicketReference,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
 import {hashRef} from './repository.mjs';
 const officialList=new OfficialList();
@@ -15,7 +16,7 @@ export function createHandler(dependencies){
     try{
       const {route,query}=routeFromRequest(req);requestRoute=route;
       if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless',release:'rsvp-qr-20261119',individual_rsvp:true,qr_links:true});return;}
-      const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
+      const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/oidc-readiness','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
       if(!known)throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
       if(route==='/api/internal/uploads/cleanup'){
         requireMethod(req,['GET']);
@@ -87,6 +88,8 @@ export function createHandler(dependencies){
         if(!photo)throw new ApiError(404,'not_found','Cette photographie n’est pas disponible.');
         const signed=await storage.sign([photo],{download:query.get('download')==='1'});
         res.writeHead(302,{'Location':signed[0].url,'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});res.end();return;
+      }else if(route==='/api/admin/oidc-readiness'){
+        requireMethod(req,['GET']);result=(deps.oidcDiagnostic??oidcRequestDiagnostic)(req);
       }else if(route==='/api/admin/state'){
         requireMethod(req,['GET']);result=await repo.adminState();
         result.albums=await Promise.all(result.albums.map(async a=>({...a,photos:await storage.sign(a.photos)})));

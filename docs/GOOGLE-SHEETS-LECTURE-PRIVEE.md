@@ -176,6 +176,95 @@ Tests locaux spécifiques : node --test tests/oidc-diagnostic.test.mjs.
 Ils simulent le contexte Vercel et les réponses Auth/rôles ; aucun déploiement ou test réel Production
 n’est exécuté par ces tests.
 
+## Diagnostic temporaire de lecture Google réelle
+
+GET /api/admin/google-sheets-readiness vérifie STS → IAM Credentials → Sheets dans la fonction Vercel.
+Il réutilise le lecteur OfficialList et l’adaptateur OIDC de production. Il est protégé par la même
+vérification de session et de rôle que le diagnostic OIDC, avec une restriction supplémentaire au rôle admin.
+Un compte photographer conserve son accès au diagnostic OIDC, mais reçoit 403 sur ce diagnostic Google.
+Aucun rôle existant n’est modifié automatiquement.
+
+La cible est fixée côté serveur : feuille officielle existante, plage exacte 'Invités'!A2:A.
+Les paramètres HTTP et les remplacements de feuille/plage ne peuvent pas changer cette cible de diagnostic.
+Le lecteur valide le format de la liste, mais aucun nom, ligne, comptage ou résultat de comparaison n’est renvoyé.
+Un nom sentinelle en mémoire permet de réutiliser le lecteur sans créer de RSVP ni consulter un billet.
+Le scope final reste spreadsheets.readonly. Aucun RPC métier, admission, compteur ou stockage Supabase n’est appelé.
+Seules la vérification de session et la lecture du rôle utilisent Supabase.
+
+### Activation limitée dans le temps
+
+La route est désactivée par défaut. Deux variables serveur NON SECRÈTES doivent être ajoutées manuellement
+au seul environnement Vercel Production, avant le futur déploiement de cette version :
+
+| Variable | Valeur |
+| --- | --- |
+| GOOGLE_SHEETS_READINESS_ENABLED | true |
+| GOOGLE_SHEETS_READINESS_UNTIL | Une date UTC future, par exemple l’heure actuelle + une heure, au format ISO avec Z. |
+
+Pour calculer la date sans secret, la console du navigateur peut exécuter :
+
+```javascript
+new Date(Date.now() + 60 * 60 * 1000).toISOString();
+```
+
+Copier seulement la date obtenue dans GOOGLE_SHEETS_READINESS_UNTIL. Aucun jeton, clé JSON ou changement IAM requis.
+Ne pas créer ou modifier VERCEL/VERCEL_ENV : leurs contrôles restent stricts.
+Sans activation explicite ET date valide future, le diagnostic retourne 404/diagnostic_disabled sans appel Google.
+À l’échéance, il se désactive automatiquement, y compris dans les instances déjà démarrées.
+
+### Fréquence et cache
+
+Une seule tentative Google par minute, tous administrateurs confondus, et un seul appel simultané PAR INSTANCE.
+Les tentatives Google échouées consomment également le délai. HTTP 429 et Retry-After indiquent le délai restant.
+Cette protection est en mémoire : elle est réinitialisée à froid et ne constitue pas une limite globale entre
+instances ou régions Vercel. Une limite globale nécessiterait un mécanisme distribué ou le pare-feu Vercel ;
+aucun de ces réglages n’est modifié ici. Le rôle admin et la fenêtre d’activation limitent l’usage de ce diagnostic temporaire.
+Aucune réponse ni jeton Google n’est mis en cache ; une nouvelle tentative autorisée relit la feuille.
+Les réponses, y compris les erreurs, portent les directives privées/no-store et des directives CDN no-store.
+
+### Test après votre déploiement
+
+1. Activer les deux variables ci-dessus en Production, avec une échéance courte, puis déployer personnellement cette version.
+2. Ouvrir le site, Souvenirs → Images → Espace photographe, et se connecter avec un compte déjà admin.
+   Un compte simplement photographer ne suffit pas. Ne pas changer de rôle pour contourner un refus.
+3. Rester sur cette même origine et exécuter le bloc suivant dans la console du navigateur.
+   Le jeton de la session existante reste en mémoire et n’est jamais affiché ou demandé dans le chat.
+
+```javascript
+(async () => {
+  const session = JSON.parse(localStorage.getItem('sb-mcnpagbcehupdbhshcea-auth-token') || 'null');
+  if (!session?.access_token) { console.info('Connectez-vous avec un compte admin.'); return; }
+  const response = await fetch('/api/admin/google-sheets-readiness', {
+    method: 'GET', cache: 'no-store', credentials: 'same-origin',
+    headers: { Authorization: 'Bearer ' + session.access_token }
+  });
+  const data = await response.json();
+  if (response.ok && data.ready === true && data.sheets_readable === true && Object.keys(data).length === 2) {
+    console.table({ ready: true, sheets_readable: true });
+    return;
+  }
+  const allowed = ['authentication_required', 'invalid_token', 'staff_required', 'admin_required',
+    'diagnostic_disabled', 'diagnostic_rate_limited', 'google_sheets_unavailable'];
+  console.info({ http: response.status, ready: false, code: allowed.includes(data.code) ? data.code : 'diagnostic_unavailable' });
+})().catch(() => console.info('Diagnostic indisponible ; reconnectez-vous et réessayez.'));
+```
+
+4. Attendre HTTP 200 avec exactement ready=true et sheets_readable=true. Cela confirme, pour cette requête,
+   l’échange OIDC auprès de STS, l’emprunt d’identité IAM et la lecture réelle de la plage officielle.
+   Aucun scan ni billet n’est nécessaire. Ne pas utiliser un billet reconnu comme contrôle de santé.
+5. HTTP 401 : se reconnecter ; 403/admin_required : compte non admin ; 404/diagnostic_disabled :
+   activation absente, désactivée, mal formée ou expirée ; 429 : respecter Retry-After.
+   HTTP 503/google_sheets_unavailable est volontairement générique : aucune erreur Google brute n’est exposée.
+6. Après succès, laisser expirer l’échéance courte. Une requête admin ultérieure doit retourner 404 sans Google.
+   Pour désactiver plus tôt, définir GOOGLE_SHEETS_READINESS_ENABLED=false et redéployer personnellement ;
+   les changements de variables ne modifient pas rétroactivement les fonctions déjà déployées.
+7. La suppression définitive peut faire l’objet d’un changement séparé : retirer cette route/importation,
+   le module google-sheets-readiness.mjs et ses variables de diagnostic. Le contrôle normal des billets reste indépendant.
+
+La chaîne réelle n’est pas exécutée contre Google par les tests locaux : transports Google et réponses Auth/rôles
+sont simulés. Le SDK, l’adaptateur, le lecteur et le routage HTTP réels sont exercés, sans données hébergées modifiées.
+Tests ciblés : node --test tests/google-sheets-readiness.test.mjs.
+
 Références officielles :
 - https://vercel.com/docs/oidc/reference
 - https://vercel.com/docs/oidc/gcp

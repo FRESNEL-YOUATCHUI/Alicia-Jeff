@@ -6,6 +6,7 @@ import {Repository} from './repository.mjs';
 import {PhotoStorage} from './storage.mjs';
 import {OfficialList} from './official-list.mjs';
 import {oidcRequestDiagnostic} from './google-oidc.mjs';
+import {googleSheetsReadiness,GOOGLE_SHEETS_READINESS_HEADERS} from './google-sheets-readiness.mjs';
 import {isLegacyTicket,isTicketReference,requireScanProof,sendTicketPage,ticketResult} from './ticket-page.mjs';
 import {hashRef} from './repository.mjs';
 const officialList=new OfficialList();
@@ -16,8 +17,9 @@ export function createHandler(dependencies){
     try{
       const {route,query}=routeFromRequest(req);requestRoute=route;
       if(route==='/api/health'){requireMethod(req,['GET']);sendJson(res,200,{ok:true,backend:'supabase-serverless',release:'rsvp-qr-20261119',individual_rsvp:true,qr_links:true});return;}
-      const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/oidc-readiness','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
+      const known=['/api/rsvp','/api/rsvp/ticket','/api/tickets/open','/api/tickets/verify','/api/messages','/api/souvenirs','/api/photos','/api/admin/state','/api/admin/oidc-readiness','/api/admin/google-sheets-readiness','/api/admin/messages','/api/admin/albums','/api/admin/settings','/api/admin/uploads/authorize','/api/admin/uploads/cleanup','/api/internal/uploads/cleanup'].includes(route)||/^\/api\/photos\/[^/]+$/.test(route)||/^\/api\/admin\/albums\/[^/]+(?:\/photos)?$/.test(route)||/^\/api\/admin\/(?:photos|messages)\/[^/]+$/.test(route)||/^\/api\/admin\/uploads\/[^/]+\/(?:finalize|cancel)$/.test(route);
       if(!known)throw new ApiError(404,'not_found','Cette adresse n’existe pas.');
+      if(route==='/api/admin/google-sheets-readiness')for(const [key,value] of Object.entries(GOOGLE_SHEETS_READINESS_HEADERS))res.setHeader(key,value);
       if(route==='/api/internal/uploads/cleanup'){
         requireMethod(req,['GET']);
         const secret=dependencies?.cronSecret??process.env.CRON_SECRET;
@@ -90,6 +92,11 @@ export function createHandler(dependencies){
         res.writeHead(302,{'Location':signed[0].url,'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});res.end();return;
       }else if(route==='/api/admin/oidc-readiness'){
         requireMethod(req,['GET']);result=(deps.oidcDiagnostic??oidcRequestDiagnostic)(req);
+      }else if(route==='/api/admin/google-sheets-readiness'){
+        requireMethod(req,['GET']);
+        if(staff.role!=='admin')throw new ApiError(403,'admin_required','Accès administrateur requis.');
+        const diagnostic=await (deps.googleSheetsReadiness??googleSheetsReadiness)(req);
+        sendJson(res,diagnostic.status,diagnostic.body,{...GOOGLE_SHEETS_READINESS_HEADERS,...diagnostic.headers});return;
       }else if(route==='/api/admin/state'){
         requireMethod(req,['GET']);result=await repo.adminState();
         result.albums=await Promise.all(result.albums.map(async a=>({...a,photos:await storage.sign(a.photos)})));
